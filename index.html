@@ -7,6 +7,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: #FFF7ED; }
@@ -29,6 +31,18 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+// ── FIREBASE ───────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCzWmaWMgjdMiNyVp3nca25tZDzuVXXFzE",
+  authDomain: "luvi-meals.firebaseapp.com",
+  projectId: "luvi-meals",
+  storageBucket: "luvi-meals.firebasestorage.app",
+  messagingSenderId: "268757552783",
+  appId: "1:268757552783:web:3522c10a0432d24e226afa"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 const C = {
@@ -987,9 +1001,9 @@ function FinderScreen({ pantry, family, allRecipes, onSelectRecipe, shoppingList
                 {[...(family.dietaryPrefs||[]),...(family.allergies||[])].slice(0,2).join(', ')}{(family.dietaryPrefs||[]).length+(family.allergies||[]).length>2?' + more':''}
               </div>
             </div>
-            <button onClick={()=>setFilterActive(!filterActive)} style={{ padding:'6px 14px', borderRadius:12, border:`2px solid ${filterActive?C.green:C.border}`, background:filterActive?C.greenLight:C.white, color:filterActive?'#065F46':C.muted, fontWeight:700, fontSize:12, cursor:'pointer' }}>
-              {filterActive ? '✅ On' : 'Off'}
-            </button>
+            <div onClick={()=>setFilterActive(!filterActive)} style={{ width:48, height:28, borderRadius:14, background:filterActive?C.green:C.border, padding:'4px', display:'flex', alignItems:'center', justifyContent:filterActive?'flex-end':'flex-start', cursor:'pointer', transition:'all 0.25s', flexShrink:0 }}>
+              <div style={{ width:20, height:20, borderRadius:10, background:C.white, boxShadow:'0 1px 4px rgba(0,0,0,0.25)', transition:'all 0.25s' }} />
+            </div>
           </div>
         )}
       </SCard>
@@ -1443,6 +1457,98 @@ function AddRecipeForm({ onSave }) {
   );
 }
 
+// ── HOUSEHOLD SETUP ───────────────────────────────────────────────────────
+function HouseholdSetup({ onJoin }) {
+  const [mode, setMode]   = useState(null); // 'create' | 'join'
+  const [code, setCode]   = useState('');
+  const [newCode, setNewCode] = useState('');
+  const [copied, setCopied]   = useState(false);
+  const [error, setError]     = useState('');
+
+  const createHousehold = () => {
+    const generated = Math.random().toString(36).substr(2, 6).toUpperCase();
+    setNewCode(generated);
+    setMode('create');
+  };
+
+  const confirmCreate = () => {
+    localStorage.setItem('luvi_household', newCode);
+    onJoin(newCode);
+  };
+
+  const joinHousehold = () => {
+    const clean = code.trim().toUpperCase();
+    if (clean.length < 4) { setError('Please enter a valid household code.'); return; }
+    localStorage.setItem('luvi_household', clean);
+    onJoin(clean);
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(newCode).catch(()=>{});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:C.cream, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 24px' }}>
+      <div style={{ width:64, height:64, borderRadius:18, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, boxShadow:'0 6px 24px rgba(249,115,22,0.35)', marginBottom:20 }}>🍽</div>
+      <div style={{ fontSize:32, fontWeight:900, color:C.orange, letterSpacing:-1, marginBottom:6 }}>Luvi</div>
+      <div style={{ fontSize:15, color:C.muted, marginBottom:36, textAlign:'center', lineHeight:1.6 }}>Family meal prep, made easy.<br/>Set up your household to get started.</div>
+
+      {!mode && (
+        <div style={{ width:'100%' }}>
+          <button className="tap" onClick={createHousehold} style={{ width:'100%', padding:'18px 24px', borderRadius:18, border:'none', cursor:'pointer', background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, color:C.white, fontWeight:800, fontSize:17, marginBottom:14, boxShadow:'0 6px 20px rgba(249,115,22,0.35)' }}>
+            🏠 Create a new household
+          </button>
+          <button className="tap" onClick={()=>setMode('join')} style={{ width:'100%', padding:'18px 24px', borderRadius:18, border:`2px solid ${C.border}`, cursor:'pointer', background:C.white, color:C.brown, fontWeight:700, fontSize:17 }}>
+            🔗 Join an existing household
+          </button>
+        </div>
+      )}
+
+      {mode === 'create' && (
+        <div className="screen" style={{ width:'100%' }}>
+          <div style={{ background:C.white, borderRadius:20, padding:24, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', marginBottom:16, textAlign:'center' }}>
+            <div style={{ fontSize:14, color:C.muted, marginBottom:12 }}>Your household code</div>
+            <div style={{ fontSize:42, fontWeight:900, color:C.orange, letterSpacing:6, marginBottom:16 }}>{newCode}</div>
+            <button onClick={copyCode} style={{ background:copied?C.greenLight:C.orangeLight, border:'none', borderRadius:12, padding:'10px 22px', cursor:'pointer', fontWeight:700, fontSize:14, color:copied?'#065F46':C.orangeDark, transition:'all 0.2s' }}>
+              {copied ? '✅ Copied!' : '📋 Copy code'}
+            </button>
+          </div>
+          <div style={{ background:C.amberLight, borderRadius:14, padding:14, marginBottom:20, display:'flex', gap:10 }}>
+            <span style={{ fontSize:18 }}>💡</span>
+            <div style={{ fontSize:13, color:'#92400E', lineHeight:1.5 }}>Share this code with your partner — they'll use it to join your household and see the same pantry, meal plan, and shopping list.</div>
+          </div>
+          <button className="tap" onClick={confirmCreate} style={{ width:'100%', padding:'16px', borderRadius:16, border:'none', cursor:'pointer', background:C.green, color:C.white, fontWeight:800, fontSize:16, boxShadow:`0 4px 16px ${C.green}50` }}>
+            Let's go! →
+          </button>
+          <button onClick={()=>setMode(null)} style={{ width:'100%', marginTop:12, background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:14, padding:'8px' }}>← Back</button>
+        </div>
+      )}
+
+      {mode === 'join' && (
+        <div className="screen" style={{ width:'100%' }}>
+          <div style={{ fontSize:15, fontWeight:700, color:C.brown, marginBottom:10 }}>Enter your household code</div>
+          <input
+            style={{ ...INPUT, fontSize:22, fontWeight:800, letterSpacing:4, textAlign:'center', textTransform:'uppercase', marginBottom:8 }}
+            placeholder="e.g. AB12CD"
+            maxLength={8}
+            value={code}
+            onChange={e=>{ setCode(e.target.value); setError(''); }}
+            onKeyDown={e=>e.key==='Enter'&&joinHousehold()}
+          />
+          {error && <div style={{ fontSize:13, color:C.red, marginBottom:8 }}>{error}</div>}
+          <div style={{ fontSize:13, color:C.muted, marginBottom:20, lineHeight:1.5 }}>Ask whoever created the household to share their 6-character code with you.</div>
+          <button className="tap" onClick={joinHousehold} style={{ width:'100%', padding:'16px', borderRadius:16, border:'none', cursor:'pointer', background:C.orange, color:C.white, fontWeight:800, fontSize:16, boxShadow:`0 4px 16px ${C.orange}50` }}>
+            Join household →
+          </button>
+          <button onClick={()=>setMode(null)} style={{ width:'100%', marginTop:12, background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:14, padding:'8px' }}>← Back</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── APP ROOT ──────────────────────────────────────────────────────────────
 function App() {
   const [tab, setTab]           = useState('home');
@@ -1450,19 +1556,74 @@ function App() {
   const [selectedRecipe, setSelectedRecipe]   = useState(null);
   const [selectedServings, setSelectedServings] = useState(4);
 
-  const [family,            setFamily]            = useState(() => load('luvi_family', {}));
-  const [pantry,            setPantry]            = useState(() => load('luvi_pantry', {}));
-  const [mealPlan,          setMealPlan]          = useState(() => load('luvi_plan', {}));
-  const [shoppingList,      setShoppingList]      = useState(() => load('luvi_shopping', {}));
-  const [customRecipes,     setCustomRecipes]     = useState(() => load('luvi_custom', []));
-  const [customPantryItems, setCustomPantryItems] = useState(() => load('luvi_custom_pantry', {}));
+  // Household / sync state
+  const [householdId, setHouseholdId] = useState(() => localStorage.getItem('luvi_household') || null);
+  const [loaded, setLoaded]           = useState(false);
+  const syncingFromRemote             = useRef(false);
 
-  useEffect(() => save('luvi_family', family),                    [family]);
-  useEffect(() => save('luvi_pantry', pantry),                    [pantry]);
-  useEffect(() => save('luvi_plan', mealPlan),                    [mealPlan]);
-  useEffect(() => save('luvi_shopping', shoppingList),            [shoppingList]);
-  useEffect(() => save('luvi_custom', customRecipes),             [customRecipes]);
-  useEffect(() => save('luvi_custom_pantry', customPantryItems),  [customPantryItems]);
+  // App data — starts empty, populated from Firestore
+  const [family,            setFamily]            = useState({});
+  const [pantry,            setPantry]            = useState({});
+  const [mealPlan,          setMealPlan]          = useState({});
+  const [shoppingList,      setShoppingList]      = useState({});
+  const [customRecipes,     setCustomRecipes]     = useState([]);
+  const [customPantryItems, setCustomPantryItems] = useState({});
+
+  // ── Subscribe to Firestore ────────────────────────────────────────────
+  useEffect(() => {
+    if (!householdId) return;
+    const docRef = db.collection('households').doc(householdId);
+    const unsub = docRef.onSnapshot(snap => {
+      syncingFromRemote.current = true;
+      if (!snap.exists) {
+        // Brand new household — seed empty document
+        docRef.set({ family:{}, pantry:{}, mealPlan:{}, shoppingList:{}, customRecipes:[], customPantryItems:{} });
+      } else {
+        const d = snap.data();
+        if (d.family            !== undefined) setFamily(d.family);
+        if (d.pantry            !== undefined) setPantry(d.pantry);
+        if (d.mealPlan          !== undefined) setMealPlan(d.mealPlan);
+        if (d.shoppingList      !== undefined) setShoppingList(d.shoppingList);
+        if (d.customRecipes     !== undefined) setCustomRecipes(d.customRecipes);
+        if (d.customPantryItems !== undefined) setCustomPantryItems(d.customPantryItems);
+      }
+      setLoaded(true);
+      requestAnimationFrame(() => { syncingFromRemote.current = false; });
+    }, err => {
+      console.error('Firestore error:', err);
+      setLoaded(true); // still show app even if offline
+    });
+    return () => unsub();
+  }, [householdId]);
+
+  // ── Write to Firestore on every change ───────────────────────────────
+  const write = useCallback((data) => {
+    if (!householdId || syncingFromRemote.current) return;
+    db.collection('households').doc(householdId).set(data, { merge: true }).catch(console.error);
+  }, [householdId]);
+
+  useEffect(() => { write({ family });            }, [family]);
+  useEffect(() => { write({ pantry });            }, [pantry]);
+  useEffect(() => { write({ mealPlan });          }, [mealPlan]);
+  useEffect(() => { write({ shoppingList });      }, [shoppingList]);
+  useEffect(() => { write({ customRecipes });     }, [customRecipes]);
+  useEffect(() => { write({ customPantryItems }); }, [customPantryItems]);
+
+  // ── Household not set up yet ──────────────────────────────────────────
+  if (!householdId) {
+    return <HouseholdSetup onJoin={id => { setHouseholdId(id); setLoaded(false); }} />;
+  }
+
+  // ── Loading spinner while first Firestore snapshot arrives ────────────
+  if (!loaded) {
+    return (
+      <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:C.cream, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+        <div style={{ width:56, height:56, borderRadius:16, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26 }}>🍽</div>
+        <div style={{ fontSize:22, fontWeight:900, color:C.orange }}>Luvi</div>
+        <div style={{ fontSize:14, color:C.muted }}>Syncing your household…</div>
+      </div>
+    );
+  }
 
   const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
 
@@ -1502,7 +1663,12 @@ function App() {
             <div style={{ fontSize:10, color:C.muted, lineHeight:1 }}>{kidsMode ? 'What do you want to eat?' : 'Family Meal Prep'}</div>
           </div>
         </button>
-        {family.name && !kidsMode && <div style={{ marginLeft:'auto', fontSize:12, color:C.muted, fontStyle:'italic' }}>{family.name}</div>}
+        {!kidsMode && (
+          <div style={{ marginLeft:'auto', textAlign:'right' }}>
+            {family.name && <div style={{ fontSize:12, color:C.muted, fontStyle:'italic' }}>{family.name}</div>}
+            <div style={{ fontSize:10, color:C.border, letterSpacing:1, fontWeight:700 }}>#{householdId}</div>
+          </div>
+        )}
         {kidsMode && <button onClick={()=>setKidsMode(false)} style={{ marginLeft:'auto', background:C.orangeLight, border:'none', borderRadius:10, padding:'6px 14px', cursor:'pointer', fontWeight:700, fontSize:12, color:C.orangeDark }}>Exit ×</button>}
       </div>
 
