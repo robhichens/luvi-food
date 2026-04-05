@@ -1618,6 +1618,11 @@ function App() {
   useEffect(() => { write({ customRecipes });     }, [customRecipes]);
   useEffect(() => { write({ customPantryItems }); }, [customPantryItems]);
 
+  // ── ALL hooks must be above any early returns (Rules of Hooks) ────────
+  const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
+  const checkedCount  = Object.values(pantry).filter(Boolean).length;
+  const shoppingCount = Object.keys(shoppingList).filter(k => !shoppingList[k].checked).length;
+
   // ── Household not set up yet ──────────────────────────────────────────
   if (!householdId) {
     return <HouseholdSetup onJoin={id => { setHouseholdId(id); setLoaded(false); }} />;
@@ -1638,11 +1643,6 @@ function App() {
       </div>
     );
   }
-
-  const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
-
-  const checkedCount    = Object.values(pantry).filter(Boolean).length;
-  const shoppingCount   = Object.keys(shoppingList).filter(k=>!shoppingList[k].checked).length;
 
   const handleTabChange = (t) => { setTab(t); setSelectedRecipe(null); };
 
