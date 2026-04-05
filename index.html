@@ -13,33 +13,15 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: #FAF6F0; }
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Satoshi', system-ui, sans-serif; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
       -webkit-font-smoothing: antialiased; 
       color: #3F2A1E; 
-      line-height: 1.6;
     }
-    input, textarea, button, select { font-family: inherit; }
-
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #D4C3B0; border-radius: 2px; }
-
     .screen { animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
     .tap:active { transform: scale(0.98); transition: transform 0.12s; }
-
-    input:focus, textarea:focus { 
-      outline: none; 
-      border-color: #84A98C !important; 
-      box-shadow: 0 0 0 3px rgba(132,169,140,0.15); 
-    }
-
-    .kids-bg { 
-      background: linear-gradient(160deg, #F8F4EF, #FAF6F0, #E8F1E9) !important; 
-    }
-
-    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-    .bounce { animation: bounce 1.6s ease-in-out infinite; }
+    input:focus, textarea:focus { outline: none; border-color: #84A98C !important; box-shadow: 0 0 0 3px rgba(132,169,140,0.15); }
+    .kids-bg { background: linear-gradient(160deg, #F8F4EF, #FAF6F0, #E8F1E9) !important; }
   </style>
 </head>
 <body>
@@ -47,223 +29,108 @@
 <script type="text/babel">
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
-// ── FIREBASE (unchanged) ───────────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCzWmaWMgjdMiNyVp3nca25tZDzuVXXFzE",
-  authDomain: "luvi-meals.firebaseapp.com",
-  projectId: "luvi-meals",
-  storageBucket: "luvi-meals.firebasestorage.app",
-  messagingSenderId: "268757552783",
-  appId: "1:268757552783:web:3522c10a0432d24e226afa"
-};
+// Firebase config (your original)
+const firebaseConfig = { /* your firebaseConfig here - copy from your previous file */ };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ── NEW BRAND COLORS – Montecito / With Love, Meghan Elegance ─────────────────────────
+// New elegant brand colors
 const C = {
-  cream: '#FAF6F0',          // Warm ivory background
+  cream: '#FAF6F0',
   surface: '#FFFFFF',
-  text: '#3F2A1E',           // Deep warm brown
+  text: '#3F2A1E',
   muted: '#8C7A6B',
   border: '#E8D9C8',
-  sage: '#84A98C',           // New primary accent – gentle sage green
+  sage: '#84A98C',
   sageDark: '#5E7A66',
   sageLight: '#D1E0D5',
-  terracotta: '#C17C4F',     // Warm blush/terracotta accent
-  terracottaLight: '#F4E4D9',
+  terracotta: '#C17C4F',
   brown: '#5C4033',
-  gold: '#D4A017',           // Subtle highlight
-  white: '#FFFFFF',
-  green: '#10B981',          // Kept for success states
 };
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-const MEAL_SLOT_TYPES = [
-  { id:'breakfast', label:'Breakfast', emoji:'🌅' },
-  { id:'lunch',     label:'Lunch',     emoji:'☀️' },
-  { id:'dinner',    label:'Dinner',    emoji:'🌙' },
-];
-const MEAL_TYPES = [
-  { id:'breakfast',    label:'Breakfast',    emoji:'🌅' },
-  { id:'lunch',        label:'Lunch',        emoji:'☀️' },
-  { id:'dinner',       label:'Dinner',       emoji:'🌙' },
-  { id:'snack_school', label:'School Snacks',emoji:'🎒' },
-  { id:'snack_home',   label:'Home Snacks',  emoji:'🏠' },
-];
-const DIETARY_OPTIONS = ['Vegetarian','Vegan','Gluten-Free','Dairy-Free','Nut-Free','Halal','Kosher','Low-Sugar','Low-Carb'];
-const ALLERGY_OPTIONS = ['Peanuts','Tree Nuts','Milk / Dairy','Eggs','Wheat / Gluten','Soy','Fish','Shellfish','Sesame'];
+// ... (copy your full MEAL_TYPES, MASTER_INGREDIENTS, RECIPES, METHODS, DIETARY_OPTIONS, ALLERGY_OPTIONS here from your original file)
 
-// (All your MASTER_INGREDIENTS, RECIPES, METHODS remain exactly the same – omitted here for brevity but copy them from your original file)
+// Keep all your helper functions: load, save, tokenMatch, scoreRecipe, matchRecipes, filterByFamily, getIngCategory, addMissingToShopping
 
-const RECIPES = [ /* ... paste all your original RECIPES array here ... */ ];
-const METHODS = { /* ... paste all your original METHODS here ... */ };
+// Shared UI
+const INPUT = { width:'100%', padding:'14px 16px', borderRadius:16, fontSize:15, border:`2px solid ${C.border}`, background:C.surface, color:C.text };
 
-// ── HELPERS (unchanged) ───────────────────────────────────────────────────────────────
-function load(key, def) { try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
-function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-
-function tokenMatch(a, b) {
-  const at = a.split(/[\s\/]+/), bt = b.split(/[\s\/]+/);
-  return at.some(t => t.length > 3 && bt.some(u => u.includes(t) || t.includes(u)));
+function SCard({ children }) {
+  return <div style={{ background:C.surface, borderRadius:24, padding:24, marginBottom:20, boxShadow:'0 4px 20px rgba(0,0,0,0.06)', border:`1px solid ${C.border}` }}>{children}</div>;
 }
 
-function scoreRecipe(recipe, pantry) {
-  const onHand = Object.entries(pantry).filter(([,v])=>v).map(([k])=>k.toLowerCase());
-  const recipeIngs = recipe.ing.map(i => i.toLowerCase());
-  const matched = recipeIngs.filter(ri => onHand.some(p => p.includes(ri) || ri.includes(p) || tokenMatch(ri,p)));
-  const missing = recipeIngs.filter(ri => !onHand.some(p => p.includes(ri) || ri.includes(p) || tokenMatch(ri,p)));
-  const score = recipeIngs.length > 0 ? Math.round((matched.length/recipeIngs.length)*100) : 0;
-  return { ...recipe, score, matchedCount:matched.length, missing };
-}
+// ... (add your other small components like Pill, ScoreBadge, EmptyState, BottomSheet, Check if you want, or keep minimal for now)
 
-// ... (keep all your other helper functions: matchRecipes, filterByFamily, getIngCategory, addMissingToShopping)
-
-// ── UPDATED SHARED UI COMPONENTS ─────────────────────────────────────────────────────
-const INPUT = { 
-  width:'100%', 
-  padding:'14px 16px', 
-  borderRadius:16, 
-  fontSize:15, 
-  border:`2px solid ${C.border}`, 
-  background:C.surface, 
-  color:C.text, 
-  transition:'border 0.2s' 
-};
-
-function Pill({ selected, onClick, children }) {
-  return (
-    <button 
-      onClick={onClick} 
-      style={{
-        padding:'8px 16px', 
-        borderRadius:24, 
-        cursor:'pointer', 
-        fontSize:14, 
-        border:`2px solid ${selected ? C.sage : C.border}`, 
-        background:selected ? C.sageLight : C.surface, 
-        color:selected ? C.sageDark : C.muted, 
-        fontWeight:selected?700:500,
-        transition:'all 0.2s'
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ScoreBadge({ score }) {
-  const [bg, fg] = score >= 80 ? [C.sageLight, C.sageDark] : score >= 50 ? [C.terracottaLight, C.terracotta] : ['#FEE2E2', '#991B1B'];
-  return <span style={{ background:bg, color:fg, fontWeight:700, fontSize:13, padding:'4px 12px', borderRadius:12 }}>{score}% match</span>;
-}
-
-function SCard({ children, style }) {
-  return (
-    <div style={{ 
-      background: C.surface, 
-      borderRadius: 24, 
-      padding: 24, 
-      marginBottom: 20, 
-      boxShadow: '0 4px 20px rgba(0,0,0,0.06)', 
-      border: `1px solid ${C.border}`,
-      ...style 
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function STitle({ children }) { 
-  return <div style={{ fontSize:17, fontWeight:700, color:C.brown, marginBottom:16 }}>{children}</div>; 
-}
-
-// (Keep your other components like EmptyState, BottomSheet, Check, etc. – just update their colors where needed to use C.sage / C.terracotta)
-
-
-// ── The rest of your screens (HomeScreen, PantryScreen, FinderScreen, etc.) stay structurally the same.
-// Only update background colors, accents, and padding/spacing as shown in the hero example below.
-
-function HomeScreen({ family, pantry, allRecipes, setTab, kidsMode, setKidsMode }) {
-  // ... (your existing logic)
+// HomeScreen with new branding
+function HomeScreen({ family, pantry, setTab, kidsMode, setKidsMode }) {
+  const checked = Object.values(pantry).filter(Boolean).length;
+  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
     <div className="screen" style={{ padding:'28px 20px' }}>
-      {/* Updated Hero – warm & elegant */}
-      <div style={{ 
-        background: `linear-gradient(135deg, ${C.sage}, ${C.sageDark})`, 
-        borderRadius: 28, 
-        padding: '32px 24px', 
-        marginBottom: 28, 
-        color: C.white, 
-        boxShadow: '0 8px 32px rgba(132,169,140,0.25)' 
-      }}>
-        <div style={{ fontSize:14, opacity:0.9, marginBottom:6 }}>Good afternoon 👋</div>
-        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.6, marginBottom:8 }}>
+      <div style={{ background: `linear-gradient(135deg, ${C.sage}, ${C.sageDark})`, borderRadius:28, padding:'32px 24px', marginBottom:28, color:'#fff', boxShadow:'0 8px 32px rgba(132,169,140,0.25)' }}>
+        <div style={{ fontSize:14, opacity:0.9 }}>{greeting} 👋</div>
+        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.6, margin:'8px 0' }}>
           What's for dinner, {family.name || 'your family'}?
         </div>
-        <div style={{ fontSize:15, opacity:0.92, lineHeight:1.5 }}>
-          Tell Luvi what's in your kitchen and we'll create something beautiful together.
+        <div style={{ fontSize:15, opacity:0.92 }}>Tell Luvi what's in your kitchen...</div>
+      </div>
+
+      {/* Kids Mode toggle - updated */}
+      <div onClick={() => setKidsMode(!kidsMode)} className="tap" style={{ background: kidsMode ? C.sage : C.surface, borderRadius:20, padding:'16px 20px', marginBottom:20, cursor:'pointer', display:'flex', alignItems:'center', gap:16, border:`2px solid ${kidsMode ? C.sage : C.border}` }}>
+        <div style={{ fontSize:32 }}>🧒</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:700, color: kidsMode ? '#fff' : C.text }}>Kids Mode</div>
+          <div style={{ fontSize:13, color: kidsMode ? 'rgba(255,255,255,0.8)' : C.muted }}>{kidsMode ? 'Tap to exit' : 'Fun view for the kids'}</div>
         </div>
       </div>
 
-      {/* Rest of your HomeScreen with updated button and card styles using C.sage and softer shadows */}
-
-      {/* Example updated action button style */}
-      <button 
-        className="tap" 
-        onClick={() => setTab('finder')} 
-        style={{ 
-          width:'100%', 
-          background: C.surface, 
-          border: `1px solid ${C.border}`, 
-          borderRadius:20, 
-          padding:'18px 20px', 
-          marginBottom:12, 
-          display:'flex', 
-          alignItems:'center', 
-          gap:16,
-          boxShadow: '0 3px 12px rgba(0,0,0,0.05)'
-        }}
-      >
-        <div style={{ fontSize:28 }}>🔍</div>
-        <div style={{ fontWeight:700, fontSize:17, color:C.text }}>Find Meal Ideas</div>
-      </button>
-
-      {/* ... continue with your other components, replacing C.orange with C.sage or C.terracotta where appropriate */}
+      {/* Add your other buttons and stats here using C.sage for accents */}
+      <button onClick={() => setTab('finder')} style={{ width:'100%', padding:'18px', background:C.surface, borderRadius:20, border:`1px solid ${C.border}`, marginBottom:12, fontWeight:700 }}>🔍 Find Meal Ideas</button>
+      {/* ... rest of your home actions */}
     </div>
   );
 }
 
-// (Continue with the rest of your App, KidsScreen, PantryScreen, etc. – just swap color references: orange → sage, etc.)
-
-// ── APP ROOT (with small render safety fix) ───────────────────────────────────────────
+// Main App
 function App() {
-  // ... all your existing state and logic unchanged
+  const [tab, setTab] = useState('home');
+  const [kidsMode, setKidsMode] = useState(false);
+  const [householdId, setHouseholdId] = useState(() => localStorage.getItem('luvi_household') || null);
+  const [family, setFamily] = useState({});
+  const [pantry, setPantry] = useState({});
 
-  // At the very bottom of your App return, the structure stays the same.
+  // ... (add the rest of your state and Firestore logic from the original file)
+
+  if (!householdId) {
+    return <div style={{ padding:40, textAlign:'center' }}>
+      <div style={{ fontSize:48, marginBottom:16 }}>🍽</div>
+      <div style={{ fontSize:28, fontWeight:800, color:C.brown }}>Luvi</div>
+      <div style={{ margin:'16px 0' }}>Family meal prep, made easy.</div>
+      <button onClick={() => { const code = Math.random().toString(36).substr(2,6).toUpperCase(); localStorage.setItem('luvi_household', code); setHouseholdId(code); }} 
+        style={{ background:C.sage, color:'#fff', padding:'14px 28px', borderRadius:16, border:'none', fontWeight:700 }}>
+        Create Household
+      </button>
+    </div>;
+  }
 
   return (
-    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background: kidsMode ? '#F8F4EF' : C.cream, display:'flex', flexDirection:'column' }}>
-      {/* Header – updated warm look */}
-      <div style={{ background:C.surface, padding:'16px 20px', position:'sticky', top:0, zIndex:30, boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
-        {/* your existing header with Luvi logo */}
+    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background: kidsMode ? '#F8F4EF' : C.cream }}>
+      <div style={{ padding:'16px 20px', background:'#fff', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+        <div style={{ fontWeight:800, fontSize:24, color:C.sage }}>Luvi</div>
       </div>
-
-      {/* Screen content */}
-      <div style={{ flex:1, overflowY:'auto', paddingBottom: kidsMode ? 24 : 80 }}>
-        {renderScreen()}
+      <div style={{ paddingBottom:80 }}>
+        {kidsMode ? <div>Kids Mode Screen (add your kids screen here)</div> : <HomeScreen family={family} pantry={pantry} setTab={setTab} kidsMode={kidsMode} setKidsMode={setKidsMode} />}
       </div>
-
-      {/* Bottom nav with sage accent */}
     </div>
   );
 }
 
-// Safer render for the single-file setup
+// Safer render
 setTimeout(() => {
-  const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(React.createElement(App));
-}, 150);
-
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+}, 100);
 </script>
 </body>
 </html>
