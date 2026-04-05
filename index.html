@@ -626,17 +626,16 @@ function HomeScreen({ family, pantry, allRecipes, setTab, kidsMode, setKidsMode 
       </div>
 
       {/* Actions */}
-      <div style={{ fontSize:14, fontWeight:700, color:C.brown, marginBottom:12 }}>What would you like to do?</div>
       {[
-        { emoji:'🔍', label:'Find Meal Ideas', sub:'See what you can make right now', tab:'finder', accent:C.orange },
-        { emoji:'📅', label:'Plan the Week', sub:'Meal planner + shopping list', tab:'plan', accent:C.blue },
-        { emoji:'🛒', label:'Update My Pantry', sub:'Check off what you have at home', tab:'pantry', accent:C.green },
-        { emoji:'👨‍👩‍👧', label:'Family Setup', sub:'Preferences, allergies & custom recipes', tab:'family', accent:C.purple },
+        { emoji:'🔍', label:'Meal Ideas',    tab:'finder', accent:C.orange },
+        { emoji:'📅', label:'Meal Planner',  tab:'plan',   accent:C.blue },
+        { emoji:'🛒', label:'My Pantry',     tab:'pantry', accent:C.green },
+        { emoji:'👨‍👩‍👧', label:'My Family',   tab:'family', accent:C.purple },
       ].map(a => (
-        <button key={a.tab} className="tap" onClick={() => setTab(a.tab)} style={{ width:'100%', textAlign:'left', background:C.white, border:'none', borderRadius:16, padding:'13px 16px', marginBottom:9, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:44, height:44, borderRadius:12, fontSize:21, display:'flex', alignItems:'center', justifyContent:'center', background:a.accent+'18', flexShrink:0 }}>{a.emoji}</div>
-          <div style={{ flex:1 }}><div style={{ fontWeight:700, fontSize:14, color:C.text }}>{a.label}</div><div style={{ fontSize:12, color:C.muted, marginTop:1 }}>{a.sub}</div></div>
-          <span style={{ color:C.muted, fontSize:20 }}>›</span>
+        <button key={a.tab} className="tap" onClick={() => setTab(a.tab)} style={{ width:'100%', textAlign:'left', background:C.white, border:'none', borderRadius:16, padding:'15px 18px', marginBottom:10, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', gap:14 }}>
+          <div style={{ width:46, height:46, borderRadius:13, fontSize:22, display:'flex', alignItems:'center', justifyContent:'center', background:a.accent+'18', flexShrink:0 }}>{a.emoji}</div>
+          <div style={{ fontWeight:700, fontSize:16, color:C.text }}>{a.label}</div>
+          <span style={{ color:C.muted, fontSize:20, marginLeft:'auto' }}>›</span>
         </button>
       ))}
 
@@ -1496,11 +1495,13 @@ function App() {
     <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:kidsMode?'linear-gradient(160deg,#FFF0E0,#FFF7ED,#E8F5E9)':C.cream, display:'flex', flexDirection:'column' }}>
       {/* Header */}
       <div style={{ background:kidsMode?'white':C.white, padding:'13px 18px', position:'sticky', top:0, zIndex:30, boxShadow:'0 2px 10px rgba(0,0,0,0.07)', display:'flex', alignItems:'center', gap:11 }}>
-        <div style={{ width:38, height:38, borderRadius:12, flexShrink:0, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 3px 10px rgba(249,115,22,0.35)' }}>🍽</div>
-        <div>
-          <div style={{ fontWeight:900, fontSize:21, color:C.orange, letterSpacing:-0.5, lineHeight:1 }}>{kidsMode ? '🧒 Kids Mode' : 'Luvi'}</div>
-          <div style={{ fontSize:10, color:C.muted, lineHeight:1 }}>{kidsMode ? 'What do you want to eat?' : 'Family Meal Prep'}</div>
-        </div>
+        <button onClick={()=>{ handleTabChange('home'); setKidsMode(false); }} style={{ display:'flex', alignItems:'center', gap:11, background:'none', border:'none', cursor:'pointer', padding:0, flexShrink:0 }}>
+          <div style={{ width:38, height:38, borderRadius:12, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 3px 10px rgba(249,115,22,0.35)', flexShrink:0 }}>🍽</div>
+          <div style={{ textAlign:'left' }}>
+            <div style={{ fontWeight:900, fontSize:21, color:C.orange, letterSpacing:-0.5, lineHeight:1 }}>{kidsMode ? '🧒 Kids Mode' : 'Luvi'}</div>
+            <div style={{ fontSize:10, color:C.muted, lineHeight:1 }}>{kidsMode ? 'What do you want to eat?' : 'Family Meal Prep'}</div>
+          </div>
+        </button>
         {family.name && !kidsMode && <div style={{ marginLeft:'auto', fontSize:12, color:C.muted, fontStyle:'italic' }}>{family.name}</div>}
         {kidsMode && <button onClick={()=>setKidsMode(false)} style={{ marginLeft:'auto', background:C.orangeLight, border:'none', borderRadius:10, padding:'6px 14px', cursor:'pointer', fontWeight:700, fontSize:12, color:C.orangeDark }}>Exit ×</button>}
       </div>
