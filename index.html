@@ -11,21 +11,20 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: #FAF6F0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
-      -webkit-font-smoothing: antialiased; 
-      color: #3F2A1E; 
-      line-height: 1.6;
-    }
+    html, body { height: 100%; background: #FFF7ED; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1C1917; }
     input, textarea, button, select { font-family: inherit; }
     ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #D4C3B0; border-radius: 2px; }
-    .screen { animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    .tap:active { transform: scale(0.98); transition: transform 0.12s; }
-    input:focus, textarea:focus { outline: none; border-color: #84A98C !important; box-shadow: 0 0 0 3px rgba(132,169,140,0.15); }
-    .kids-bg { background: linear-gradient(160deg, #F8F4EF, #FAF6F0, #E8F1E9) !important; }
+    ::-webkit-scrollbar-thumb { background: #E7D5BF; border-radius: 2px; }
+    .screen { animation: fadeIn 0.22s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+    .tap:active { transform: scale(0.97); transition: transform 0.1s; }
+    input:focus, textarea:focus { outline: none; border-color: #F97316 !important; box-shadow: 0 0 0 3px rgba(249,115,22,0.15); }
+    .kids-bg { background: linear-gradient(160deg, #FFF0E0, #FFF7ED, #E8F5E9) !important; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    .bounce { animation: bounce 1.6s ease-in-out infinite; }
+    @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .pop { animation: pop 0.25s cubic-bezier(0.34,1.56,0.64,1); }
   </style>
 </head>
 <body>
@@ -45,22 +44,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ── BRAND COLORS – With Love, Meghan Montecito Elegance ─────────────────────
+// ── THEME ──────────────────────────────────────────────────────────────────
 const C = {
-  cream: '#FAF6F0',
-  surface: '#FFFFFF',
-  text: '#3F2A1E',
-  muted: '#8C7A6B',
-  border: '#E8D9C8',
-  sage: '#84A98C',
-  sageDark: '#5E7A66',
-  sageLight: '#D1E0D5',
-  terracotta: '#C17C4F',
-  brown: '#5C4033',
-  white: '#FFFFFF',
+  cream:'#FFF7ED', orange:'#F97316', orangeLight:'#FED7AA', orangeDark:'#EA580C',
+  green:'#10B981', greenLight:'#D1FAE5', amber:'#F59E0B', amberLight:'#FEF3C7',
+  red:'#EF4444', redLight:'#FEE2E2', purple:'#8B5CF6', purpleLight:'#EDE9FE',
+  blue:'#3B82F6', blueLight:'#DBEAFE', pink:'#EC4899', pinkLight:'#FCE7F3',
+  brown:'#78350F', text:'#1C1917', muted:'#78716C', border:'#E7D5BF', white:'#FFFFFF',
 };
 
-// ── ORIGINAL DATA ───────────────────────────────────────────────────────────
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const MEAL_SLOT_TYPES = [
   { id:'breakfast', label:'Breakfast', emoji:'🌅' },
@@ -87,6 +79,8 @@ const MASTER_INGREDIENTS = [
   { category:'Baking & Sweets', emoji:'🍫', items:['Sugar','Brown sugar','Baking powder','Baking soda','Vanilla extract','Cocoa powder','Chocolate chips','Powdered sugar'] },
   { category:'Nuts & Seeds', emoji:'🥜', items:['Almonds','Walnuts','Peanuts','Sunflower seeds','Chia seeds','Sesame seeds','Trail mix','Raisins'] },
 ];
+const RECIPE_EMOJIS = ['🍳','🥞','🥗','🍝','🌮','🍔','🥘','🍛','🍜','🥙','🍕','🥣','🍲','🥚','🌯','🍱','🥦','🐟','🍗','🥩'];
+
 const RECIPES = [
   // BREAKFAST
   { id:1,  type:'breakfast', emoji:'🍳', name:'Scrambled Eggs',        time:'10 min', base:2, desc:'Fluffy golden eggs — the quickest, most reliable breakfast around.', tip:'Low and slow is the secret. Take off heat just before they look done.', ing:['Eggs','Butter','Milk','Salt','Black pepper'] },
@@ -97,18 +91,393 @@ const RECIPES = [
   { id:6,  type:'breakfast', emoji:'🍓', name:'Yogurt Parfait',         time:'5 min',  base:2, desc:'Creamy Greek yogurt layered with granola and fresh berries.', tip:'Prep in mason jars the night before for zero-stress mornings.', ing:['Greek yogurt','Berries','Honey','Oats'] },
   { id:7,  type:'breakfast', emoji:'🥤', name:'Banana Smoothie',        time:'5 min',  base:2, desc:'Thick, creamy smoothie kids love — ready in under 5 minutes.', tip:'Freeze the bananas ahead for the thickest, coldest smoothie.', ing:['Bananas','Milk','Greek yogurt','Honey','Vanilla extract'] },
   { id:8,  type:'breakfast', emoji:'🍳', name:'Veggie Omelette',        time:'15 min', base:2, desc:'A hearty omelette loaded with colorful veggies and melty cheese.', tip:'Let kids pick their fillings the night before!', ing:['Eggs','Butter','Cheddar cheese','Bell peppers','Onion','Spinach','Salt','Black pepper'] },
-  // LUNCH (abbreviated for space — paste the rest from your original file if needed)
+  // LUNCH
   { id:9,  type:'lunch', emoji:'🧀', name:'Grilled Cheese',             time:'10 min', base:2, desc:'Crispy outside, perfectly melty inside. The all-time classic.', tip:'Use mayo on the outside instead of butter for a golden crust.', ing:['Bread','Cheddar cheese','Butter'] },
-  // ... (I kept the first few; in your real file paste all 43)
-  // DINNER, SNACKS etc. — add the rest from your original RECIPES array
+  { id:10, type:'lunch', emoji:'🌮', name:'Chicken Quesadillas',        time:'20 min', base:4, desc:'Crispy cheesy quesadillas with tender chicken — always a hit.', tip:'Press down with a spatula while cooking for maximum crispiness.', ing:['Tortillas','Chicken breast','Cheddar cheese','Salsa','Sour cream','Olive oil','Salt','Black pepper'] },
+  { id:11, type:'lunch', emoji:'🍅', name:'Tomato Soup & Grilled Cheese',time:'30 min', base:4, desc:'Rich velvety soup with grilled cheese for dipping — a dream combo.', tip:'Blend silky-smooth for picky eaters who don\'t like chunks.', ing:['Canned tomatoes','Chicken broth','Butter','Onion','Garlic','Cream cheese','Bread','Cheddar cheese','Salt','Black pepper'] },
+  { id:12, type:'lunch', emoji:'🥪', name:'Tuna Salad Sandwich',        time:'10 min', base:2, desc:'Classic tuna salad piled high on soft bread — lunchbox hero.', tip:'A squeeze of lemon and pinch of celery salt brightens everything.', ing:['Canned tuna','Mayonnaise','Mustard','Celery','Bread','Lettuce','Salt','Black pepper'] },
+  { id:13, type:'lunch', emoji:'🍝', name:'Pasta Salad',                time:'25 min', base:6, desc:'A colorful hearty pasta salad — great for the whole week.', tip:'Make a big batch Sunday for easy weekday lunches.', ing:['Pasta','Cherry tomatoes','Cucumber','Bell peppers','Cheddar cheese','Olive oil','Vinegar','Italian seasoning','Salt','Black pepper'] },
+  { id:14, type:'lunch', emoji:'🌯', name:'Chicken Wrap',               time:'15 min', base:2, desc:'A fresh filling wrap with chicken, veggies, and creamy sauce.', tip:'Warm the tortilla in a dry pan 20 seconds — easier to fold.', ing:['Tortillas','Chicken breast','Lettuce','Tomatoes','Cheddar cheese','Mayonnaise','Salt','Black pepper'] },
+  { id:15, type:'lunch', emoji:'🍚', name:'Veggie Fried Rice',          time:'20 min', base:4, desc:'Colorful fried rice packed with vegetables — great for leftover rice.', tip:'Day-old cold rice fries up perfectly and won\'t get mushy.', ing:['Rice','Eggs','Peas','Carrots','Onion','Garlic','Soy sauce','Vegetable oil','Salt','Black pepper'] },
+  { id:16, type:'lunch', emoji:'🥓', name:'BLT Sandwich',               time:'15 min', base:2, desc:'Crispy bacon, cool lettuce, juicy tomato — three ingredients, zero regrets.', tip:'Toast the bread until just golden so everything holds together.', ing:['Bread','Bacon','Lettuce','Tomatoes','Mayonnaise'] },
+  // DINNER
+  { id:17, type:'dinner', emoji:'🍝', name:'Spaghetti Bolognese',       time:'40 min', base:6, desc:'Rich slow-simmered meat sauce over spaghetti — a family forever favorite.', tip:'Let it simmer 20+ minutes uncovered for a thick deep sauce.', ing:['Pasta','Ground beef','Canned tomatoes','Tomato paste','Onion','Garlic','Olive oil','Italian seasoning','Salt','Black pepper','Parmesan'] },
+  { id:18, type:'dinner', emoji:'🥘', name:'Chicken Stir Fry',          time:'25 min', base:4, desc:'Quick, colorful, and better than takeout — on the table in 25 minutes.', tip:'High heat is essential. Don\'t crowd the pan or you\'ll steam.', ing:['Chicken breast','Rice','Broccoli','Bell peppers','Carrots','Garlic','Soy sauce','Vegetable oil','Honey','Ginger','Cornstarch'] },
+  { id:19, type:'dinner', emoji:'🌮', name:'Taco Night',                time:'25 min', base:4, desc:'Family taco night! Everyone builds their own — guaranteed smiles.', tip:'Set up a taco bar and let everyone customize their own.', ing:['Tortillas','Ground beef','Onion','Garlic','Cumin','Chili powder','Salt','Cheddar cheese','Lettuce','Tomatoes','Sour cream','Salsa'] },
+  { id:20, type:'dinner', emoji:'🧀', name:'Homemade Mac & Cheese',     time:'25 min', base:6, desc:'Creamy, from-scratch mac and cheese — the ultimate kid-pleaser.', tip:'Add a pinch of mustard powder to the sauce — it makes the cheese pop.', ing:['Pasta','Cheddar cheese','Butter','Milk','Flour','Salt','Black pepper'] },
+  { id:21, type:'dinner', emoji:'🐟', name:'Baked Salmon & Rice',       time:'30 min', base:4, desc:'Tender lemon-garlic salmon with fluffy rice — light, healthy, delicious.', tip:'Pat salmon completely dry before seasoning for a golden crust.', ing:['Salmon','Rice','Butter','Garlic','Lemons','Salt','Black pepper','Olive oil'] },
+  { id:22, type:'dinner', emoji:'🍛', name:'Vegetable Curry',           time:'35 min', base:4, desc:'Warm fragrant curry in a creamy coconut sauce. Cozy comfort food.', tip:'Bloom spices in oil for 60 seconds before adding anything else.', ing:['Canned coconut milk','Curry powder','Potatoes','Chickpeas','Onion','Garlic','Canned tomatoes','Spinach','Vegetable oil','Salt','Rice','Turmeric'] },
+  { id:23, type:'dinner', emoji:'🍔', name:'Homemade Burgers',          time:'30 min', base:4, desc:'Juicy homemade burgers with all the fixings — better than any drive-through.', tip:'A small thumbprint in each patty center prevents puffing.', ing:['Ground beef','Bread','Cheddar cheese','Lettuce','Tomatoes','Onion','Ketchup','Mustard','Mayonnaise','Salt','Black pepper'] },
+  { id:24, type:'dinner', emoji:'🥦', name:'Chicken & Broccoli',        time:'25 min', base:4, desc:'Tender chicken and crisp broccoli in a silky garlic-soy sauce over rice.', tip:'Sprinkle sesame seeds on top for a restaurant-worthy finish.', ing:['Chicken breast','Broccoli','Garlic','Soy sauce','Honey','Vegetable oil','Rice','Salt','Black pepper','Cornstarch','Ginger'] },
+  { id:25, type:'dinner', emoji:'🌶️', name:'Hearty Beef Chili',        time:'50 min', base:8, desc:'A thick warming chili that gets even better the next day.', tip:'Make a double batch — freezes beautifully for impossible busy nights.', ing:['Ground beef','Black beans','Canned tomatoes','Tomato paste','Onion','Garlic','Chili powder','Cumin','Paprika','Salt','Vegetable oil','Cheddar cheese','Sour cream'] },
+  { id:26, type:'dinner', emoji:'🍋', name:'Lemon Garlic Pasta',        time:'20 min', base:4, desc:'Bright garlicky pasta with parmesan and lemon. Quick and deeply satisfying.', tip:'Save a cup of pasta water — it makes the sauce glossy and silky.', ing:['Pasta','Butter','Garlic','Lemons','Parmesan','Olive oil','Salt','Black pepper'] },
+  { id:27, type:'dinner', emoji:'🍗', name:'Sheet Pan Chicken & Veggies',time:'45 min', base:4, desc:'Everything roasts together on one pan — easy prep, even easier cleanup.', tip:'Cut all veggies to similar sizes so everything cooks evenly.', ing:['Chicken breast','Potatoes','Broccoli','Bell peppers','Olive oil','Garlic powder','Paprika','Salt','Black pepper','Italian seasoning'] },
+  { id:28, type:'dinner', emoji:'🍳', name:'Egg Fried Rice',            time:'20 min', base:4, desc:'A weeknight lifesaver — uses up leftover rice in the most delicious way.', tip:'The pan must be screaming hot before anything goes in.', ing:['Rice','Eggs','Soy sauce','Garlic','Onion','Vegetable oil','Peas','Carrots','Salt','Black pepper'] },
+  { id:29, type:'dinner', emoji:'🍕', name:'Homemade Pizza Night',      time:'45 min', base:4, desc:'DIY pizza night — everyone tops their own. Dinner and family fun in one.', tip:'Pre-bake the crust 5 minutes before topping for a crispier base.', ing:['Flour','Tomato paste','Mozzarella','Olive oil','Salt','Sugar','Baking powder','Italian seasoning','Garlic powder'] },
+  { id:30, type:'dinner', emoji:'🥘', name:'Lentil Soup',               time:'40 min', base:6, desc:'Hearty nourishing lentil soup — warming, budget-friendly, and filling.', tip:'A squeeze of lemon right at the end brightens the whole bowl.', ing:['Lentils','Onion','Garlic','Carrots','Canned tomatoes','Chicken broth','Cumin','Turmeric','Olive oil','Salt','Black pepper','Lemons'] },
+  // SCHOOL SNACKS
+  { id:31, type:'snack_school', emoji:'🍎', name:'Apple Slices & Peanut Butter', time:'5 min', base:1, desc:'The ultimate after-school classic. Sweet apple, creamy peanut butter.', tip:'A little lemon juice keeps slices from browning by snack time.', ing:['Apples','Peanut butter'] },
+  { id:32, type:'snack_school', emoji:'🥜', name:'Custom Trail Mix',    time:'5 min',  base:4, desc:'Let kids help mix their own trail mix. Portioned into bags for easy grab-and-go.', tip:'Pack in small resealable snack bags — the perfect serving size.', ing:['Trail mix','Raisins','Chocolate chips','Almonds'] },
+  { id:33, type:'snack_school', emoji:'🧀', name:'Cheese & Crackers Box',time:'5 min', base:2, desc:'Sliced cheese, crackers, and deli turkey. A mini charcuterie for the lunchbox.', tip:'Use a mini cookie cutter to make fun cheese shapes — kids love it.', ing:['Crackers','Cheddar cheese','Deli turkey'] },
+  { id:34, type:'snack_school', emoji:'🍓', name:'Yogurt with Berries', time:'5 min',  base:1, desc:'Creamy Greek yogurt with fresh berries and a drizzle of honey.', tip:'Pack berries and honey separately so it stays fresh until snack time.', ing:['Greek yogurt','Berries','Honey'] },
+  { id:35, type:'snack_school', emoji:'🍌', name:'Banana & Nut Butter', time:'5 min',  base:1, desc:'A naturally energizing snack — great before sports or a big afternoon.', tip:'Pair with a small handful of crackers to make it even more filling.', ing:['Bananas','Peanut butter','Crackers'] },
+  { id:36, type:'snack_school', emoji:'🥕', name:'Veggie Sticks & Hummus',time:'10 min',base:2, desc:'Crunchy colorful veggies with creamy hummus. A snack they\'ll actually eat.', tip:'Blend chickpeas with lemon and olive oil for fresh homemade hummus.', ing:['Carrots','Cucumber','Bell peppers','Celery','Chickpeas','Olive oil','Garlic','Lemons','Salt'] },
+  // HOME SNACKS
+  { id:37, type:'snack_home', emoji:'🧀', name:'Loaded Nachos',         time:'15 min', base:4, desc:'Melty cheesy nachos with all the toppings — after-school victory.', tip:'Layer cheese BETWEEN chips, not just on top, so every chip gets cheesy.', ing:['Crackers','Cheddar cheese','Salsa','Sour cream','Black beans','Avocado'] },
+  { id:38, type:'snack_home', emoji:'🐜', name:'Ants on a Log',         time:'5 min',  base:2, desc:'Celery + peanut butter + raisins. A classic that\'s stood the test of time.', tip:'Let little kids assemble their own — it\'s a fun activity AND a snack.', ing:['Celery','Peanut butter','Raisins'] },
+  { id:39, type:'snack_home', emoji:'🍓', name:'Fruit Smoothie',        time:'5 min',  base:2, desc:'A sweet refreshing smoothie made with whatever fruit is in the house.', tip:'Use frozen fruit for a thicker, colder smoothie with no ice needed.', ing:['Bananas','Berries','Milk','Honey','Greek yogurt'] },
+  { id:40, type:'snack_home', emoji:'🍞', name:'Cinnamon Sugar Toast', time:'5 min',   base:2, desc:'Warm buttery toast with cinnamon sugar. Pure childhood in every bite.', tip:'Pop under the broiler for 60 seconds for a crackly caramelized top.', ing:['Bread','Butter','Cinnamon','Sugar'] },
+  { id:41, type:'snack_home', emoji:'🍌', name:'PB Banana Toast',       time:'5 min',  base:1, desc:'Creamy peanut butter, sweet banana, drizzle of honey. A perfect trio.', tip:'Add a sprinkle of cinnamon and a tiny pinch of salt — trust it.', ing:['Bread','Peanut butter','Bananas','Honey'] },
+  { id:42, type:'snack_home', emoji:'🌮', name:'Mini Quesadilla Triangles',time:'10 min',base:2, desc:'Crispy cheese quesadillas cut into triangles — a kid-approved crowd pleaser.', tip:'Dip in salsa, sour cream, or guacamole for extra fun.', ing:['Tortillas','Cheddar cheese','Butter'] },
+  { id:43, type:'snack_home', emoji:'🍫', name:'Chocolate Banana Bites',time:'10 min', base:2, desc:'Banana slices with melted chocolate chips. Simple and magical.', tip:'Freeze 15 minutes for a cold fudgy treat on hot days.', ing:['Bananas','Chocolate chips','Peanut butter'] },
 ];
 
+// ── RECIPE METHODS ────────────────────────────────────────────────────────
 const METHODS = {
-  1: ["Crack eggs...", /* paste all your original method steps */ ],
-  // ... paste the full METHODS object from your original file
+  // BREAKFAST
+  1: [ // Scrambled Eggs
+    "Crack eggs into a bowl, add a splash of milk, salt and pepper. Whisk until fully combined.",
+    "Melt butter in a non-stick pan over low-medium heat — don't let it sizzle.",
+    "Pour in the egg mixture. Let it sit for 10 seconds, then gently push with a spatula.",
+    "Keep folding slowly every few seconds. Remove from heat while still slightly glossy.",
+    "Serve immediately on toast — they finish cooking from the residual heat.",
+  ],
+  2: [ // French Toast
+    "In a wide bowl, whisk together eggs, milk, cinnamon, and vanilla extract.",
+    "Dip each bread slice into the egg mixture, letting it soak for 30 seconds per side.",
+    "Melt butter in a pan over medium heat until foamy.",
+    "Cook soaked bread for 2–3 minutes per side until golden brown.",
+    "Serve with a drizzle of maple syrup and a dusting of powdered sugar if you have it.",
+  ],
+  3: [ // Fluffy Pancakes
+    "Whisk together flour, sugar, baking powder, and salt in a large bowl.",
+    "In a separate bowl, mix eggs, milk, melted butter, and vanilla extract.",
+    "Pour the wet ingredients into the dry and stir until just combined — lumps are fine, don't over-mix.",
+    "Heat a non-stick pan over medium heat and lightly butter it.",
+    "Pour in ¼ cup of batter per pancake. Cook until bubbles form on top, then flip and cook 1 more minute.",
+    "Serve in a stack with maple syrup, berries, or whatever the family loves.",
+  ],
+  4: [ // Oatmeal Bar
+    "Combine oats and milk (2:1 ratio) in a saucepan over medium heat.",
+    "Stir regularly and cook for 5 minutes until thick and creamy.",
+    "Stir in a pinch of cinnamon and a drizzle of honey.",
+    "Set out small bowls of toppings: sliced bananas, berries, nuts, extra honey, and more.",
+    "Let everyone build their own bowl — kids love choosing their own toppings!",
+  ],
+  5: [ // Avocado Toast
+    "Toast bread until golden and crisp.",
+    "Halve the avocado, remove the pit, and scoop the flesh into a bowl.",
+    "Mash with a fork, then squeeze in lemon juice, salt, and pepper. Mix well.",
+    "Spread generously onto the toast.",
+    "Optional: top with a fried egg — fry in butter over medium heat until the white is set.",
+    "Finish with a pinch of salt and pepper on top.",
+  ],
+  6: [ // Yogurt Parfait
+    "Spoon a layer of Greek yogurt into a glass or bowl.",
+    "Add a handful of fresh berries on top.",
+    "Add a layer of oats (or granola if you have it).",
+    "Repeat the layers once more — yogurt, berries, oats.",
+    "Finish with a drizzle of honey over the top.",
+    "Serve immediately, or seal and refrigerate overnight for a grab-and-go breakfast.",
+  ],
+  7: [ // Banana Smoothie
+    "Peel and slice the banana (frozen works best for thickness).",
+    "Add banana, milk, Greek yogurt, honey, and vanilla to a blender.",
+    "Blend on high for 30–45 seconds until completely smooth.",
+    "Taste and add more honey if needed.",
+    "Pour into glasses and serve immediately with a straw.",
+  ],
+  8: [ // Veggie Omelette
+    "Dice the bell peppers and onion into small pieces. Tear or chop the spinach.",
+    "Crack eggs into a bowl, season with salt and pepper, and whisk well.",
+    "Melt butter in a non-stick pan over medium heat. Sauté the veggies for 2 minutes until softened.",
+    "Pour the eggs over the veggies and let them set around the edges, about 1–2 minutes.",
+    "Sprinkle cheddar cheese over one half of the omelette.",
+    "Fold the omelette in half over the cheese and slide onto a plate.",
+  ],
+  // LUNCH
+  9: [ // Grilled Cheese
+    "Butter both sides of each bread slice (or spread mayo for extra crispiness).",
+    "Place one slice butter-side down in a cold pan, then turn the heat to medium.",
+    "Add a generous layer of sliced or grated cheddar cheese.",
+    "Top with the second slice of bread, butter-side up.",
+    "Cook for 3–4 minutes until the bottom is golden, then carefully flip.",
+    "Cook another 2–3 minutes until both sides are golden and the cheese is fully melted. Slice diagonally and serve.",
+  ],
+  10: [ // Chicken Quesadillas
+    "Season chicken with salt and pepper. Cook in a pan with olive oil over medium-high heat for 6–7 minutes per side until cooked through. Slice into strips.",
+    "Lay a tortilla flat in a clean pan over medium heat.",
+    "Spread salsa on one half, add chicken strips and a handful of cheddar cheese.",
+    "Fold the empty half over the filled half and press down with a spatula.",
+    "Cook for 2–3 minutes until golden, then flip and cook another 2 minutes.",
+    "Slice into triangles and serve with sour cream and extra salsa.",
+  ],
+  11: [ // Tomato Soup & Grilled Cheese
+    "Dice onion and garlic. Sauté in butter in a pot over medium heat for 4 minutes until soft.",
+    "Add canned tomatoes and chicken broth. Bring to a simmer for 10 minutes.",
+    "Stir in cream cheese until melted and smooth. Season with salt and pepper.",
+    "Use an immersion blender (or regular blender) to blitz until silky smooth.",
+    "Meanwhile, make grilled cheese sandwiches: butter bread, fill with cheddar, cook in a pan until golden on both sides.",
+    "Serve the soup in bowls with the grilled cheese cut into strips for dipping.",
+  ],
+  12: [ // Tuna Salad Sandwich
+    "Drain the canned tuna well and add to a bowl.",
+    "Mix in mayonnaise, a small squirt of mustard, and finely diced celery.",
+    "Season with salt and pepper. Squeeze in a little lemon juice if you have it.",
+    "Taste and adjust — add more mayo if too dry, more mustard for extra flavour.",
+    "Spread generously onto bread, add lettuce, and close the sandwich.",
+    "Cut diagonally and serve.",
+  ],
+  13: [ // Pasta Salad
+    "Cook pasta according to package directions. Drain and rinse under cold water to cool completely.",
+    "Halve the cherry tomatoes, dice cucumber and bell peppers, cube the cheese.",
+    "Toss cooled pasta with all the chopped veggies and cheese in a large bowl.",
+    "Drizzle with olive oil and vinegar (about 2:1 ratio), then sprinkle Italian seasoning, salt and pepper.",
+    "Toss well to coat everything. Taste and adjust the seasoning.",
+    "Refrigerate for at least 20 minutes before serving — it gets better the longer it sits.",
+  ],
+  14: [ // Chicken Wrap
+    "Season chicken with salt and pepper. Cook in a pan over medium-high heat for 6–7 minutes per side. Let rest, then slice.",
+    "Warm the tortilla in a dry pan for 20 seconds per side so it's pliable.",
+    "Lay the tortilla flat and spread mayonnaise down the centre.",
+    "Layer on lettuce, tomato, sliced chicken, and cheddar cheese.",
+    "Fold in the sides of the tortilla, then roll up tightly from the bottom.",
+    "Slice in half at a diagonal and serve.",
+  ],
+  15: [ // Veggie Fried Rice
+    "Make sure your rice is cold and at least a day old — freshly cooked rice will turn mushy.",
+    "Heat vegetable oil in a large pan or wok over high heat until very hot.",
+    "Add diced onion and garlic and stir-fry for 1 minute.",
+    "Add carrots and peas and cook another 2 minutes.",
+    "Push everything to the side, crack in the eggs and scramble them.",
+    "Add the cold rice and soy sauce. Stir-fry everything together for 3–4 minutes until heated through and slightly charred.",
+    "Season with salt and pepper and serve hot.",
+  ],
+  16: [ // BLT
+    "Cook bacon in a pan over medium heat until crispy, turning once. Drain on paper towels.",
+    "Toast both slices of bread until golden.",
+    "Spread mayonnaise generously on one or both slices of toast.",
+    "Layer the lettuce, then sliced tomatoes (season with a pinch of salt), then the crispy bacon.",
+    "Close the sandwich, press down gently, and cut diagonally.",
+  ],
+  // DINNER
+  17: [ // Spaghetti Bolognese
+    "Finely dice the onion and garlic. Heat olive oil in a large pan over medium heat.",
+    "Add onion and cook for 4 minutes until soft. Add garlic and cook 1 more minute.",
+    "Add ground beef and break it up with a spoon. Cook until browned, about 6–8 minutes. Drain excess fat.",
+    "Stir in tomato paste and cook for 2 minutes. Add canned tomatoes and Italian seasoning.",
+    "Reduce heat and simmer uncovered for 20+ minutes, stirring occasionally, until thick and rich. Season with salt and pepper.",
+    "Meanwhile, cook spaghetti in well-salted boiling water per packet directions. Drain.",
+    "Toss pasta with the sauce and serve with a generous grating of Parmesan.",
+  ],
+  18: [ // Chicken Stir Fry
+    "Slice chicken into thin strips and season with salt and pepper. Mix soy sauce, honey, and cornstarch in a small bowl — this is your sauce.",
+    "Cook rice according to package directions.",
+    "Heat vegetable oil in a wok or large pan over high heat until smoking.",
+    "Add chicken and stir-fry for 4–5 minutes until cooked through. Remove and set aside.",
+    "Add a little more oil, then stir-fry broccoli, bell peppers, and carrots for 3 minutes.",
+    "Return chicken to the pan, add minced garlic and ginger, pour in the sauce.",
+    "Toss everything together for 1–2 minutes until glossy and coated. Serve over rice.",
+  ],
+  19: [ // Taco Night
+    "Dice onion and mince garlic. Heat oil in a pan over medium-high heat.",
+    "Add onion and cook 3 minutes. Add garlic, then ground beef — break it up and cook until browned.",
+    "Drain excess fat, then season generously with cumin, chili powder, and salt. Stir well and cook 2 more minutes.",
+    "Warm tortillas in a dry pan for 20 seconds per side, or wrap in a damp paper towel and microwave 30 seconds.",
+    "Set up the taco bar: shredded cheese, shredded lettuce, diced tomatoes, sour cream, and salsa in small bowls.",
+    "Let everyone build their own — this is the best part!",
+  ],
+  20: [ // Mac & Cheese
+    "Cook pasta in well-salted boiling water until al dente. Reserve ½ cup pasta water, then drain.",
+    "In the same pot, melt butter over medium heat. Add flour and stir for 1 minute to make a roux.",
+    "Slowly whisk in milk, a little at a time, until smooth. Cook for 3–4 minutes until thickened.",
+    "Remove from heat and stir in grated cheddar until completely melted and smooth.",
+    "Season with salt, pepper, and a tiny pinch of mustard powder if you have it.",
+    "Add the cooked pasta and stir to coat. Add a splash of pasta water if it seems too thick.",
+    "Serve immediately — this is best fresh and hot.",
+  ],
+  21: [ // Baked Salmon & Rice
+    "Preheat oven to 200°C / 400°F. Cook rice according to package directions.",
+    "Pat salmon fillets completely dry with a paper towel — this helps them brown.",
+    "Mince the garlic and mix with softened butter, salt, pepper, and a squeeze of lemon juice.",
+    "Place salmon on a lined baking tray. Spread the butter mixture over the top of each fillet.",
+    "Bake for 12–15 minutes depending on thickness, until the salmon flakes easily with a fork.",
+    "Serve over fluffy rice with extra lemon wedges on the side.",
+  ],
+  22: [ // Vegetable Curry
+    "Dice onion and garlic. Peel and cube potatoes into bite-sized pieces.",
+    "Heat oil in a large pot over medium heat. Add onion and cook 4 minutes until soft.",
+    "Add garlic, curry powder, and turmeric. Stir and cook for 60 seconds until fragrant.",
+    "Add canned tomatoes, coconut milk, and potatoes. Stir well and bring to a simmer.",
+    "Cook for 15–20 minutes until potatoes are tender. Add chickpeas and spinach.",
+    "Cook another 5 minutes until spinach is wilted. Season with salt.",
+    "Serve over steamed rice with warm naan if you have it.",
+  ],
+  23: [ // Homemade Burgers
+    "Season ground beef generously with salt and pepper. Divide into equal portions.",
+    "Shape each portion into a round patty, slightly wider than your buns. Press a small thumbprint in the centre of each.",
+    "Heat a pan or grill over high heat. Cook patties for 3–4 minutes per side for medium. Add cheese in the last minute.",
+    "Toast the buns cut-side down in the pan for 1–2 minutes until golden.",
+    "Spread mayo, ketchup, and mustard on the buns.",
+    "Layer up: lettuce, tomato, onion, patty, and the top bun. Press down and serve immediately.",
+  ],
+  24: [ // Chicken & Broccoli
+    "Slice chicken into bite-sized pieces. Mix soy sauce, honey, cornstarch, and ginger in a bowl — this is your sauce.",
+    "Cook rice according to package directions.",
+    "Cut broccoli into small florets. Mince the garlic.",
+    "Heat oil in a pan over high heat. Add chicken and cook 4–5 minutes until golden and cooked through. Remove.",
+    "In the same pan, stir-fry broccoli for 2–3 minutes. Add garlic and cook 30 seconds more.",
+    "Return chicken to the pan, pour in the sauce, and toss everything together for 1–2 minutes until glossy.",
+    "Serve over rice, sprinkled with sesame seeds if you have them.",
+  ],
+  25: [ // Beef Chili
+    "Dice onion and garlic. Heat oil in a large heavy pot over medium-high heat.",
+    "Add onion and cook 4 minutes. Add garlic and cook 1 more minute.",
+    "Add ground beef, breaking it up well. Brown for 6–8 minutes, then drain excess fat.",
+    "Stir in tomato paste, chili powder, cumin, and paprika. Cook for 2 minutes.",
+    "Add canned tomatoes and black beans. Stir well and bring to a simmer.",
+    "Reduce heat, cover partially, and cook for 30+ minutes stirring occasionally. Season with salt.",
+    "Serve in bowls topped with shredded cheddar and a dollop of sour cream.",
+  ],
+  26: [ // Lemon Garlic Pasta
+    "Cook pasta in a large pot of well-salted boiling water. Reserve 1 cup pasta water before draining.",
+    "While pasta cooks, mince garlic finely. Zest and juice the lemon.",
+    "Melt butter and olive oil in a pan over medium heat. Add garlic and cook 1–2 minutes until golden — don't burn it.",
+    "Add lemon zest and a big pinch of salt.",
+    "Add the drained pasta and toss well. Add pasta water a splash at a time until the sauce coats the pasta silkily.",
+    "Remove from heat, stir in Parmesan, squeeze over lemon juice, and season with black pepper.",
+    "Serve immediately with extra Parmesan on top.",
+  ],
+  27: [ // Sheet Pan Chicken & Veggies
+    "Preheat oven to 220°C / 425°F. Line a large baking sheet with parchment paper.",
+    "Cut potatoes into chunks, broccoli into florets, and bell peppers into pieces — keep sizes similar.",
+    "Place chicken breasts and all vegetables on the sheet pan.",
+    "Drizzle generously with olive oil. Sprinkle garlic powder, paprika, Italian seasoning, salt, and pepper over everything.",
+    "Toss to coat well and spread in a single layer — don't crowd the pan.",
+    "Roast for 25–30 minutes until chicken is cooked through and vegetables are golden at the edges.",
+    "Serve straight from the pan — no extra dishes needed!",
+  ],
+  28: [ // Egg Fried Rice
+    "Use day-old cold rice for best results — freshly cooked rice will clump.",
+    "Beat eggs in a small bowl. Dice onion and mince garlic.",
+    "Heat oil in a large pan or wok over very high heat until smoking.",
+    "Add onion and garlic and stir-fry for 1 minute. Add carrots and peas, cook 2 more minutes.",
+    "Push everything to the side. Pour in beaten eggs and scramble until just set.",
+    "Add cold rice and break up any clumps. Pour soy sauce over the top.",
+    "Stir-fry everything together for 3–4 minutes until rice is heated through and lightly toasted. Season and serve hot.",
+  ],
+  29: [ // Homemade Pizza Night
+    "Mix flour, baking powder, salt, and sugar in a bowl. Add olive oil and just enough water to bring it together into a soft dough.",
+    "Knead for 2–3 minutes on a floured surface until smooth. Rest for 10 minutes.",
+    "Preheat oven to 220°C / 425°F. Roll dough out thin on a floured surface.",
+    "Transfer to a baking tray and pre-bake the crust for 5 minutes.",
+    "Spread tomato paste over the base. Sprinkle with garlic powder and Italian seasoning.",
+    "Add mozzarella and everyone's chosen toppings.",
+    "Bake for 10–15 minutes until the crust is crisp and the cheese is bubbling and golden.",
+  ],
+  30: [ // Lentil Soup
+    "Dice onion, garlic, and carrots. Heat olive oil in a large pot over medium heat.",
+    "Cook onion and carrots for 4–5 minutes until softened. Add garlic, cumin, and turmeric, cook 1 minute.",
+    "Rinse lentils under cold water, then add to the pot.",
+    "Pour in canned tomatoes and chicken broth. Bring to a boil.",
+    "Reduce heat and simmer for 25–30 minutes, stirring occasionally, until lentils are completely soft.",
+    "Season generously with salt and pepper. Squeeze in fresh lemon juice right at the end.",
+    "Serve with crusty bread or pita on the side.",
+  ],
+  // SCHOOL SNACKS
+  31: [ // Apple Slices & Peanut Butter
+    "Wash the apple and cut into thin wedges. Remove the core.",
+    "Squeeze a little lemon juice over the slices to stop browning.",
+    "Spoon peanut butter into a small container for dipping.",
+    "Pack together in a lunchbox or serve on a plate.",
+  ],
+  32: [ // Trail Mix
+    "Measure out your mix-ins: trail mix base, raisins, chocolate chips, and almonds.",
+    "Combine everything in a large bowl and toss together.",
+    "Portion into small resealable snack bags — one per person.",
+    "Store leftovers in an airtight container for up to 2 weeks.",
+  ],
+  33: [ // Cheese & Crackers Box
+    "Slice or cube the cheddar cheese into bite-sized pieces.",
+    "Arrange crackers, cheese, and slices of deli turkey in a container or on a plate.",
+    "Optional: use a small cookie cutter to make fun shapes with the cheese slices.",
+    "Pack into a lunchbox with a small ice pack to keep fresh.",
+  ],
+  34: [ // Yogurt with Berries
+    "Spoon Greek yogurt into a container or bowl.",
+    "If packing for school: keep the berries and honey in separate small containers.",
+    "At snack time, add berries and drizzle honey over the yogurt.",
+    "Stir together and enjoy!",
+  ],
+  35: [ // Banana & Nut Butter
+    "Pack a whole banana and a small container of peanut butter.",
+    "At snack time, peel and slice the banana.",
+    "Dip slices into peanut butter and eat alongside the crackers.",
+  ],
+  36: [ // Veggie Sticks & Hummus
+    "Peel and cut carrots into sticks. Slice cucumber into rounds or sticks. Cut bell peppers into strips.",
+    "For quick hummus: blend drained chickpeas with olive oil, minced garlic, lemon juice, and salt until smooth.",
+    "Pack veggie sticks upright in a container with the hummus in a small pot on the side.",
+    "Refrigerate until ready to pack in the lunchbox.",
+  ],
+  // HOME SNACKS
+  37: [ // Loaded Nachos
+    "Preheat oven to 180°C / 350°F (or use the grill/broiler).",
+    "Spread crackers or tortilla chips in a single layer on a baking sheet.",
+    "Scatter black beans over the top, then generously cover with grated cheddar cheese.",
+    "Bake for 8–10 minutes (or grill for 3–4 minutes) until cheese is fully melted and bubbling.",
+    "Remove from oven. Top with salsa, sour cream, and sliced avocado.",
+    "Serve immediately straight from the tray.",
+  ],
+  38: [ // Ants on a Log
+    "Wash the celery stalks and cut into 3-inch pieces.",
+    "Spoon peanut butter into the groove of each celery piece.",
+    "Press raisins into the peanut butter in a line along the top.",
+    "Arrange on a plate and serve — or let the kids make their own!",
+  ],
+  39: [ // Fruit Smoothie
+    "Peel and slice the banana. If using fresh berries, give them a quick rinse.",
+    "Add banana, berries, milk, Greek yogurt, and honey to the blender.",
+    "Blend on high for 30–45 seconds until completely smooth.",
+    "Pour into glasses. Add a straw and serve immediately.",
+    "For a thicker smoothie, use frozen fruit and skip the ice.",
+  ],
+  40: [ // Cinnamon Sugar Toast
+    "Mix together sugar and cinnamon in a small bowl (about 3:1 sugar to cinnamon).",
+    "Toast the bread until golden.",
+    "While still hot, spread butter generously over the toast.",
+    "Immediately sprinkle the cinnamon sugar mixture over the buttered toast.",
+    "For a crackly top: place under the broiler for 30–60 seconds and watch closely.",
+  ],
+  41: [ // PB Banana Toast
+    "Toast the bread until golden and crisp.",
+    "Spread a generous layer of peanut butter over the warm toast.",
+    "Peel and slice the banana into rounds. Layer them on top of the peanut butter.",
+    "Drizzle honey over the banana slices.",
+    "Optional: sprinkle a tiny pinch of cinnamon and salt for extra depth.",
+  ],
+  42: [ // Mini Quesadilla Triangles
+    "Place a tortilla flat in a pan over medium heat.",
+    "Sprinkle a good layer of grated cheddar cheese over one half of the tortilla.",
+    "Fold the plain half over the cheesy half.",
+    "Cook for 2 minutes until golden, then flip and cook another 1–2 minutes.",
+    "Remove from heat, let cool slightly, then slice into triangles.",
+    "Serve with salsa or sour cream for dipping.",
+  ],
+  43: [ // Chocolate Banana Bites
+    "Peel and slice bananas into ½-inch thick rounds.",
+    "Add chocolate chips and a spoonful of peanut butter to a microwave-safe bowl.",
+    "Microwave in 20-second bursts, stirring each time, until fully melted and smooth.",
+    "Dip each banana slice into the chocolate or drizzle the chocolate over the top.",
+    "Place on a lined tray and refrigerate for 15 minutes to set.",
+    "Serve cold — or freeze for a cool treat on a hot day!",
+  ],
 };
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
+function load(key, def) { try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
 function tokenMatch(a, b) {
   const at = a.split(/[\s\/]+/), bt = b.split(/[\s\/]+/);
   return at.some(t => t.length > 3 && bt.some(u => u.includes(t) || t.includes(u)));
@@ -130,100 +499,1209 @@ function matchRecipes(pantry, mealType, allRecipes) {
     .sort((a,b) => b.score - a.score);
 }
 
-// ── SHARED UI ───────────────────────────────────────────────────────────────
-const INPUT = { width:'100%', padding:'14px 16px', borderRadius:16, fontSize:15, border:`2px solid ${C.border}`, background:C.surface, color:C.text };
-
-function SCard({ children, style }) {
-  return <div style={{ background:C.surface, borderRadius:24, padding:24, marginBottom:20, boxShadow:'0 4px 20px rgba(0,0,0,0.06)', border:`1px solid ${C.border}`, ...style }}>{children}</div>;
+function filterByFamily(recipes, family) {
+  if (!family || (!family.dietaryPrefs?.length && !family.allergies?.length)) return recipes;
+  return recipes.filter(r => {
+    const ingStr = r.ing.join(' ').toLowerCase();
+    const allergy = family.allergies || [];
+    const prefs = family.dietaryPrefs || [];
+    if (allergy.includes('Peanuts') && (ingStr.includes('peanut'))) return false;
+    if (allergy.includes('Tree Nuts') && (ingStr.includes('almond') || ingStr.includes('walnut') || ingStr.includes('cashew') || ingStr.includes('pecan'))) return false;
+    if (allergy.includes('Milk / Dairy') && (ingStr.includes('milk') || ingStr.includes('butter') || ingStr.includes('cheese') || ingStr.includes('cream') || ingStr.includes('yogurt'))) return false;
+    if (allergy.includes('Eggs') && ingStr.includes('egg')) return false;
+    if (allergy.includes('Wheat / Gluten') && (ingStr.includes('flour') || ingStr.includes('bread') || ingStr.includes('pasta') || ingStr.includes('tortilla') || ingStr.includes('cracker') || ingStr.includes('oat'))) return false;
+    if (allergy.includes('Fish') && (ingStr.includes('salmon') || ingStr.includes('tuna') || ingStr.includes('fish'))) return false;
+    if (prefs.includes('Vegetarian') && (ingStr.includes('beef') || ingStr.includes('bacon') || ingStr.includes('ham') || ingStr.includes('turkey') || ingStr.includes('sausage') || ingStr.includes('pork') || ingStr.includes('chicken') || ingStr.includes('shrimp') || ingStr.includes('salmon') || ingStr.includes('tuna'))) return false;
+    if (prefs.includes('Vegan') && (ingStr.includes('beef') || ingStr.includes('chicken') || ingStr.includes('egg') || ingStr.includes('milk') || ingStr.includes('butter') || ingStr.includes('cheese') || ingStr.includes('cream') || ingStr.includes('yogurt') || ingStr.includes('honey') || ingStr.includes('bacon') || ingStr.includes('ham'))) return false;
+    if (prefs.includes('Gluten-Free') && (ingStr.includes('flour') || ingStr.includes('bread') || ingStr.includes('pasta') || ingStr.includes('tortilla') || ingStr.includes('cracker'))) return false;
+    if (prefs.includes('Dairy-Free') && (ingStr.includes('milk') || ingStr.includes('butter') || ingStr.includes('cheese') || ingStr.includes('cream') || ingStr.includes('yogurt') || ingStr.includes('sour cream'))) return false;
+    if (prefs.includes('Nut-Free') && (ingStr.includes('peanut') || ingStr.includes('almond') || ingStr.includes('walnut') || ingStr.includes('nut'))) return false;
+    return true;
+  });
 }
 
-function STitle({ children }) { return <div style={{ fontSize:17, fontWeight:700, color:C.brown, marginBottom:16 }}>{children}</div>; }
+function getIngCategory(ing) {
+  const il = ing.toLowerCase();
+  for (const cat of MASTER_INGREDIENTS) {
+    if (cat.items.some(i => i.toLowerCase() === il || il.includes(i.toLowerCase()) || i.toLowerCase().includes(il))) return cat.category;
+  }
+  return 'Other';
+}
 
-// ── HOME SCREEN ─────────────────────────────────────────────────────────────
-function HomeScreen({ family, pantry, setTab, kidsMode, setKidsMode }) {
-  const checked = Object.values(pantry).filter(Boolean).length;
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const familyName = family.name || 'your family';
+function addMissingToShopping(recipe, shoppingList, setShoppingList) {
+  if (!recipe.missing || recipe.missing.length === 0) return;
+  setShoppingList(sl => {
+    const updated = { ...sl };
+    recipe.missing.forEach(ing => {
+      const key = ing;
+      if (updated[key]) {
+        const sources = updated[key].from || [];
+        if (!sources.includes(recipe.name)) updated[key] = { ...updated[key], from:[...sources, recipe.name] };
+      } else {
+        updated[key] = { checked:false, from:[recipe.name] };
+      }
+    });
+    return updated;
+  });
+}
 
+// ── SHARED UI ──────────────────────────────────────────────────────────────
+const INPUT = { width:'100%', padding:'11px 14px', borderRadius:12, fontSize:14, border:`2px solid ${C.border}`, background:C.white, color:C.text, transition:'border 0.18s' };
+
+function Pill({ selected, onClick, children, color }) {
+  const accent = color || C.orange;
+  return <button onClick={onClick} style={{ padding:'7px 14px', borderRadius:20, cursor:'pointer', fontSize:13, border:`2px solid ${selected ? accent : C.border}`, background:selected ? accent+'25' : C.white, color:selected ? accent.replace('F9','EA').replace('7316','580C') || C.orangeDark : C.muted, fontWeight:selected?700:400, transition:'all 0.18s', lineHeight:1.2, whiteSpace:'nowrap' }}>{children}</button>;
+}
+
+function Check({ checked, onChange, label, small }) {
   return (
-    <div className="screen" style={{ padding:'28px 20px' }}>
-      <div style={{ background: `linear-gradient(135deg, ${C.sage}, ${C.sageDark})`, borderRadius:28, padding:'32px 24px', marginBottom:28, color:'#fff', boxShadow:'0 8px 32px rgba(132,169,140,0.25)' }}>
-        <div style={{ fontSize:14, opacity:0.9 }}>{greeting} 👋</div>
-        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.6, marginBottom:8 }}>What's for dinner, {familyName}?</div>
-        <div style={{ fontSize:15, opacity:0.92 }}>Warm, elegant family meal ideas from your pantry.</div>
+    <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'5px 0', userSelect:'none' }}>
+      <div onClick={onChange} style={{ width:small?20:22, height:small?20:22, borderRadius:6, flexShrink:0, border:`2px solid ${checked?C.orange:C.border}`, background:checked?C.orange:C.white, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s' }}>
+        {checked && <span style={{ color:'white', fontSize:13, fontWeight:900 }}>✓</span>}
       </div>
+      <span style={{ fontSize:small?13:14, color:C.text }}>{label}</span>
+    </label>
+  );
+}
 
-      <div onClick={() => setKidsMode(!kidsMode)} className="tap" style={{ background: kidsMode ? C.sage : C.surface, borderRadius:20, padding:'16px 20px', marginBottom:20, cursor:'pointer', display:'flex', alignItems:'center', gap:16, border:`2px solid ${kidsMode ? C.sage : C.border}` }}>
-        <div style={{ fontSize:32 }}>🧒</div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontWeight:700, color: kidsMode ? '#fff' : C.text }}>Kids Mode</div>
-          <div style={{ fontSize:13, color: kidsMode ? 'rgba(255,255,255,0.85)' : C.muted }}>{kidsMode ? 'Tap to turn off' : 'Fun simplified view for the kids'}</div>
+function ScoreBadge({ score }) {
+  const [bg,fg] = score>=80 ? [C.greenLight,'#065F46'] : score>=50 ? [C.amberLight,'#92400E'] : [C.redLight,'#991B1B'];
+  return <span style={{ background:bg, color:fg, fontWeight:700, fontSize:12, padding:'3px 9px', borderRadius:10, whiteSpace:'nowrap' }}>{score}% match</span>;
+}
+
+function SCard({ children, style }) {
+  return <div style={{ background:C.white, borderRadius:20, padding:20, marginBottom:16, boxShadow:'0 2px 10px rgba(0,0,0,0.06)', ...style }}>{children}</div>;
+}
+function STitle({ children }) { return <div style={{ fontSize:15, fontWeight:700, color:C.brown, marginBottom:14 }}>{children}</div>; }
+
+function EmptyState({ emoji, title, body }) {
+  return <div style={{ textAlign:'center', padding:'48px 20px' }}><div style={{ fontSize:52, marginBottom:16 }}>{emoji}</div><div style={{ fontWeight:800, fontSize:18, color:C.brown, marginBottom:8 }}>{title}</div><div style={{ fontSize:14, color:C.muted, lineHeight:1.6 }}>{body}</div></div>;
+}
+
+function BottomSheet({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:100, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+      <div onClick={onClose} style={{ flex:1, background:'rgba(0,0,0,0.4)' }} />
+      <div className="pop" style={{ background:C.white, borderRadius:'20px 20px 0 0', maxWidth:480, width:'100%', margin:'0 auto', maxHeight:'80vh', display:'flex', flexDirection:'column', boxShadow:'0 -8px 32px rgba(0,0,0,0.18)' }}>
+        <div style={{ padding:'12px 20px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+          <div style={{ fontWeight:700, fontSize:16, color:C.brown }}>{title}</div>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:22, color:C.muted, lineHeight:1 }}>×</button>
         </div>
+        <div style={{ overflowY:'auto', padding:'16px 20px 32px' }}>{children}</div>
       </div>
-
-      <SCard>
-        <button onClick={() => setTab('pantry')} className="tap" style={{ width:'100%', padding:'18px 20px', background:C.surface, border:`2px solid ${C.border}`, borderRadius:20, marginBottom:12, fontWeight:700, fontSize:16, display:'flex', alignItems:'center', gap:12 }}>
-          🛒 <span>My Pantry</span>
-        </button>
-        <button onClick={() => setTab('finder')} className="tap" style={{ width:'100%', padding:'18px 20px', background:C.sage, color:'white', border:'none', borderRadius:20, fontWeight:700, fontSize:16, display:'flex', alignItems:'center', gap:12 }}>
-          🔍 <span>Find Meal Ideas</span>
-        </button>
-      </SCard>
     </div>
   );
 }
 
-// ── MAIN APP ────────────────────────────────────────────────────────────────
-function App() {
-  const [tab, setTab] = useState('home');
-  const [kidsMode, setKidsMode] = useState(false);
-  const [householdId, setHouseholdId] = useState(() => localStorage.getItem('luvi_household') || null);
-  const [family, setFamily] = useState({});
-  const [pantry, setPantry] = useState({});
+// ── HOME SCREEN ────────────────────────────────────────────────────────────
+function HomeScreen({ family, pantry, allRecipes, setTab, kidsMode, setKidsMode }) {
+  const checked = Object.values(pantry).filter(Boolean).length;
+  const total = MASTER_INGREDIENTS.reduce((a,c)=>a+c.items.length,0);
+  const hour = new Date().getHours();
+  const greeting = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
+  const memberCount = (family.members||[]).length;
+  const familyName = family.name || 'your family';
 
-  // Auto create household
-  useEffect(() => {
-    if (!householdId) {
-      const newId = Math.random().toString(36).substr(2,6).toUpperCase();
-      localStorage.setItem('luvi_household', newId);
-      setHouseholdId(newId);
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      {/* Hero */}
+      <div style={{ background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, borderRadius:24, padding:'26px 22px', marginBottom:22, color:C.white, boxShadow:'0 6px 24px rgba(249,115,22,0.3)' }}>
+        <div style={{ fontSize:13, opacity:0.85, marginBottom:4 }}>{greeting} 👋</div>
+        <div style={{ fontSize:26, fontWeight:900, letterSpacing:-0.5, marginBottom:6 }}>What's for dinner, {familyName}?</div>
+        <div style={{ fontSize:14, opacity:0.88, lineHeight:1.5 }}>Tell Luvi what's in your kitchen and we'll figure out the rest.</div>
+      </div>
+
+      {/* Kids Mode banner */}
+      <div className="tap" onClick={() => setKidsMode(!kidsMode)} style={{ background: kidsMode ? C.green : C.white, borderRadius:16, padding:'14px 18px', marginBottom:18, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', gap:14, border:`2px solid ${kidsMode ? C.green : C.border}`, transition:'all 0.2s' }}>
+        <div style={{ width:44, height:44, borderRadius:12, background: kidsMode ? 'rgba(255,255,255,0.25)' : C.pinkLight, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>🧒</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:700, fontSize:15, color: kidsMode ? C.white : C.text }}>Kids Mode</div>
+          <div style={{ fontSize:12, color: kidsMode ? 'rgba(255,255,255,0.8)' : C.muted }}>{ kidsMode ? 'On — fun snack view active! Tap to turn off.' : 'A fun simplified view for the kids'}</div>
+        </div>
+        <div style={{ width:44, height:26, borderRadius:13, background: kidsMode ? 'rgba(255,255,255,0.3)' : C.border, padding:'3px', display:'flex', alignItems:'center', justifyContent: kidsMode ? 'flex-end' : 'flex-start', transition:'all 0.2s', flexShrink:0 }}>
+          <div style={{ width:20, height:20, borderRadius:10, background:C.white, boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
+        {[
+          { n:checked, sub:`of ${total} total`, label:'pantry items', emoji:'🛒', color:C.orange },
+          { n:memberCount, sub:memberCount===0?'add in Family tab':'in your crew', label:'family members', emoji:'👨‍👩‍👧', color:C.purple },
+        ].map(s => (
+          <div key={s.label} style={{ background:C.white, borderRadius:16, padding:'14px 12px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', textAlign:'center' }}>
+            <div style={{ fontSize:24, marginBottom:4 }}>{s.emoji}</div>
+            <div style={{ fontSize:26, fontWeight:900, color:s.color, lineHeight:1 }}>{s.n}</div>
+            <div style={{ fontSize:12, fontWeight:600, color:C.brown, marginTop:2 }}>{s.label}</div>
+            <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      {[
+        { emoji:'🔍', label:'Meal Ideas',    tab:'finder', accent:C.orange },
+        { emoji:'📅', label:'Meal Planner',  tab:'plan',   accent:C.blue },
+        { emoji:'🛒', label:'My Pantry',     tab:'pantry', accent:C.green },
+        { emoji:'👨‍👩‍👧', label:'My Family',   tab:'family', accent:C.purple },
+      ].map(a => (
+        <button key={a.tab} className="tap" onClick={() => setTab(a.tab)} style={{ width:'100%', textAlign:'left', background:C.white, border:'none', borderRadius:16, padding:'15px 18px', marginBottom:10, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', gap:14 }}>
+          <div style={{ width:46, height:46, borderRadius:13, fontSize:22, display:'flex', alignItems:'center', justifyContent:'center', background:a.accent+'18', flexShrink:0 }}>{a.emoji}</div>
+          <div style={{ fontWeight:700, fontSize:16, color:C.text }}>{a.label}</div>
+          <span style={{ color:C.muted, fontSize:20, marginLeft:'auto' }}>›</span>
+        </button>
+      ))}
+
+      <div style={{ background:C.orangeLight, borderRadius:14, padding:15, marginTop:6, display:'flex', gap:12 }}>
+        <span style={{ fontSize:18 }}>💡</span>
+        <div style={{ fontSize:13, color:C.brown, lineHeight:1.5 }}><strong>Tip:</strong> Update your pantry, then Find Meal Ideas to see what you can make tonight. Use the Week Planner to prep ahead and auto-generate a shopping list.</div>
+      </div>
+    </div>
+  );
+}
+
+// ── KIDS MODE ──────────────────────────────────────────────────────────────
+function KidsScreen({ pantry, allRecipes }) {
+  const [chosen, setChosen] = useState(null);
+  const snacks = useMemo(() => {
+    return allRecipes
+      .filter(r => r.type === 'snack_home' || r.type === 'snack_school' || r.type === 'breakfast')
+      .map(r => scoreRecipe(r, pantry))
+      .filter(r => r.score >= 40)
+      .sort((a,b) => b.score - a.score);
+  }, [pantry, allRecipes]);
+
+  const KID_COLORS = ['#FF6B6B','#FF9F43','#48DBFB','#1DD1A1','#F368E0','#5F27CD','#54A0FF','#01CBC6'];
+
+  if (chosen) {
+    return (
+      <div className="screen kids-bg" style={{ padding:'20px 16px', minHeight:'100vh' }}>
+        <button onClick={() => setChosen(null)} style={{ background:'white', border:'none', borderRadius:14, padding:'10px 18px', cursor:'pointer', fontWeight:800, fontSize:15, color:C.orange, marginBottom:20, boxShadow:'0 2px 8px rgba(0,0,0,0.1)' }}>← Back</button>
+        <div style={{ textAlign:'center', marginBottom:24 }}>
+          <div style={{ fontSize:80, marginBottom:10 }} className="bounce">{chosen.emoji}</div>
+          <div style={{ fontSize:28, fontWeight:900, color:C.brown }}>{chosen.name}</div>
+          <div style={{ fontSize:16, color:C.muted, marginTop:6 }}>⏱ {chosen.time}</div>
+        </div>
+        <div style={{ background:'white', borderRadius:22, padding:22, boxShadow:'0 4px 20px rgba(0,0,0,0.1)', marginBottom:16 }}>
+          <div style={{ fontSize:18, fontWeight:800, color:C.brown, marginBottom:14 }}>You'll need:</div>
+          {chosen.ing.map(ing => {
+            const have = Object.entries(pantry).filter(([,v])=>v).some(([k]) => k.toLowerCase().includes(ing.toLowerCase()) || ing.toLowerCase().includes(k.toLowerCase()));
+            return (
+              <div key={ing} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:`1px solid ${C.border}`, fontSize:16 }}>
+                <span style={{ fontSize:22 }}>{have ? '✅' : '❌'}</span>
+                <span style={{ fontWeight:600, color: have ? C.text : C.muted, textDecoration: have ? 'none' : 'line-through' }}>{ing}</span>
+              </div>
+            );
+          })}
+        </div>
+        {chosen.tip && (
+          <div style={{ background:C.orangeLight, borderRadius:16, padding:16, display:'flex', gap:10 }}>
+            <span style={{ fontSize:22 }}>💡</span>
+            <div style={{ fontSize:15, color:C.brown, lineHeight:1.5 }}>{chosen.tip}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="screen kids-bg" style={{ padding:'20px 16px', minHeight:'100vh' }}>
+      <div style={{ textAlign:'center', marginBottom:24 }}>
+        <div style={{ fontSize:48, marginBottom:8 }}>🤩</div>
+        <div style={{ fontSize:28, fontWeight:900, color:C.brown }}>What do you want?</div>
+        <div style={{ fontSize:16, color:C.muted, marginTop:4 }}>Tap something yummy!</div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+        {snacks.map((r,i) => (
+          <div key={r.id} className="tap" onClick={() => setChosen(r)} style={{ background:KID_COLORS[i % KID_COLORS.length], borderRadius:22, padding:'22px 12px', textAlign:'center', cursor:'pointer', boxShadow:'0 4px 16px rgba(0,0,0,0.15)', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+            <div style={{ fontSize:52 }}>{r.emoji}</div>
+            <div style={{ fontSize:15, fontWeight:800, color:'white', lineHeight:1.3, textShadow:'0 1px 3px rgba(0,0,0,0.2)' }}>{r.name}</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.85)', background:'rgba(0,0,0,0.15)', borderRadius:10, padding:'3px 10px' }}>⏱ {r.time}</div>
+          </div>
+        ))}
+      </div>
+      {snacks.length === 0 && <EmptyState emoji="🛒" title="Pantry looks a bit empty!" body="Ask a grown-up to check off what's in the kitchen first." />}
+    </div>
+  );
+}
+
+// ── PANTRY ─────────────────────────────────────────────────────────────────
+function PantryScreen({ pantry, setPantry, customPantryItems, setCustomPantryItems }) {
+  const [search, setSearch]       = useState('');
+  const [expanded, setExpanded]   = useState(() => MASTER_INGREDIENTS.reduce((a,c)=>({...a,[c.category]:true}),{}));
+  const [newItemText, setNewItemText] = useState({}); // { [category]: string }
+
+  const toggle = (item) => setPantry(p=>({...p,[item]:!p[item]}));
+  const toggleCat = (cat) => setExpanded(e=>({...e,[cat]:!e[cat]}));
+
+  const allItemsForCat = (cat) => [
+    ...cat.items,
+    ...(customPantryItems[cat.category] || []),
+  ];
+
+  const checkCat = (cat) => setPantry(p=>{ const n={...p}; allItemsForCat(cat).forEach(i=>n[i]=true); return n; });
+  const uncheckCat = (cat) => setPantry(p=>{ const n={...p}; allItemsForCat(cat).forEach(i=>n[i]=false); return n; });
+
+  const addCustomItem = (category) => {
+    const val = (newItemText[category] || '').trim();
+    if (!val) return;
+    // Don't add duplicates
+    const existing = allItemsForCat(MASTER_INGREDIENTS.find(c=>c.category===category));
+    if (existing.some(i => i.toLowerCase() === val.toLowerCase())) {
+      setNewItemText(t=>({...t,[category]:''}));
+      return;
     }
+    setCustomPantryItems(ci => ({ ...ci, [category]: [...(ci[category]||[]), val] }));
+    setPantry(p => ({ ...p, [val]: true })); // auto-check when added
+    setNewItemText(t=>({...t,[category]:''}));
+  };
+
+  const removeCustomItem = (category, item) => {
+    setCustomPantryItems(ci => ({ ...ci, [category]: (ci[category]||[]).filter(i=>i!==item) }));
+    setPantry(p=>{ const n={...p}; delete n[item]; return n; });
+  };
+
+  const totalCustom = Object.values(customPantryItems).reduce((a,c)=>a+c.length,0);
+  const checkedCount = Object.values(pantry).filter(Boolean).length;
+  const totalBase = MASTER_INGREDIENTS.reduce((a,c)=>a+c.items.length,0);
+  const total = totalBase + totalCustom;
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return MASTER_INGREDIENTS;
+    const q = search.toLowerCase();
+    return MASTER_INGREDIENTS
+      .map(cat => ({
+        ...cat,
+        items: [
+          ...cat.items.filter(i=>i.toLowerCase().includes(q)),
+          ...(customPantryItems[cat.category]||[]).filter(i=>i.toLowerCase().includes(q)),
+        ]
+      }))
+      .filter(cat => cat.items.length > 0);
+  }, [search, customPantryItems]);
+
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      <div style={{ fontSize:24, fontWeight:900, color:C.brown, marginBottom:4 }}>My Pantry 🛒</div>
+      <div style={{ fontSize:13, color:C.muted, marginBottom:16, lineHeight:1.5 }}>Check off everything you have at home right now.</div>
+
+      <div style={{ background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, borderRadius:16, padding:'14px 18px', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', color:C.white }}>
+        <div>
+          <span style={{ fontSize:26, fontWeight:900 }}>{checkedCount}</span>
+          <span style={{ fontSize:14, opacity:0.9, marginLeft:6 }}>/ {total} checked</span>
+          {totalCustom > 0 && <span style={{ fontSize:12, opacity:0.75, marginLeft:6 }}>({totalCustom} custom)</span>}
+        </div>
+        {checkedCount > 0 && <button onClick={()=>setPantry({})} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:C.white, borderRadius:10, padding:'6px 14px', cursor:'pointer', fontSize:12, fontWeight:600 }}>Clear all</button>}
+      </div>
+
+      <div style={{ position:'relative', marginBottom:16 }}>
+        <span style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)', fontSize:16, pointerEvents:'none' }}>🔍</span>
+        <input style={{ ...INPUT, paddingLeft:40 }} placeholder="Search ingredients..." value={search} onChange={e=>setSearch(e.target.value)} />
+      </div>
+
+      {filtered.map(masterCat => {
+        const cat = MASTER_INGREDIENTS.find(c=>c.category===masterCat.category) || masterCat;
+        const customItems = customPantryItems[cat.category] || [];
+        const allItems = search.trim() ? masterCat.items : [...cat.items, ...customItems];
+        const catChecked = allItems.filter(i=>pantry[i]).length;
+        const open = expanded[cat.category];
+        const inputVal = newItemText[cat.category] || '';
+
+        return (
+          <div key={cat.category} style={{ background:C.white, borderRadius:16, marginBottom:10, boxShadow:'0 2px 8px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+            {/* Category header */}
+            <div onClick={()=>toggleCat(cat.category)} style={{ display:'flex', alignItems:'center', padding:'13px 17px', cursor:'pointer', userSelect:'none' }}>
+              <span style={{ fontSize:20, marginRight:10 }}>{cat.emoji}</span>
+              <span style={{ fontWeight:700, fontSize:14, flex:1, color:C.brown }}>{cat.category}</span>
+              {catChecked > 0 && <span style={{ background:C.orangeLight, color:C.orangeDark, fontSize:12, fontWeight:700, padding:'2px 10px', borderRadius:10, marginRight:8 }}>{catChecked}/{allItems.length}</span>}
+              <span style={{ color:C.muted, fontSize:18, transition:'transform 0.2s', transform:open?'rotate(90deg)':'rotate(0)', display:'inline-block' }}>›</span>
+            </div>
+
+            {open && (
+              <div style={{ padding:'0 17px 14px', borderTop:`1px solid ${C.border}` }}>
+                {/* Built-in items */}
+                <div style={{ paddingTop:10, display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 6px' }}>
+                  {(search.trim() ? masterCat.items.filter(i=>cat.items.includes(i)) : cat.items).map(item => (
+                    <Check key={item} small checked={!!pantry[item]} onChange={()=>toggle(item)} label={item} />
+                  ))}
+                </div>
+
+                {/* Custom items for this category */}
+                {customItems.length > 0 && (
+                  <div style={{ marginTop:8, paddingTop:8, borderTop:`1px dashed ${C.border}` }}>
+                    {customItems.map(item => (
+                      <div key={item} style={{ display:'flex', alignItems:'center', gap:4 }}>
+                        <div style={{ flex:1 }}>
+                          <Check small checked={!!pantry[item]} onChange={()=>toggle(item)} label={item} />
+                        </div>
+                        <button onClick={()=>removeCustomItem(cat.category, item)} style={{ background:'none', border:'none', cursor:'pointer', color:C.border, fontSize:16, lineHeight:1, padding:'0 2px', flexShrink:0 }}
+                          onMouseEnter={e=>e.currentTarget.style.color=C.red}
+                          onMouseLeave={e=>e.currentTarget.style.color=C.border}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add custom item input */}
+                <div style={{ marginTop:12, display:'flex', gap:6 }}>
+                  <input
+                    style={{ ...INPUT, flex:1, fontSize:13, padding:'8px 12px' }}
+                    placeholder={`Add to ${cat.category}...`}
+                    value={inputVal}
+                    onChange={e=>setNewItemText(t=>({...t,[cat.category]:e.target.value}))}
+                    onKeyDown={e=>e.key==='Enter'&&addCustomItem(cat.category)}
+                  />
+                  <button
+                    onClick={()=>addCustomItem(cat.category)}
+                    style={{ background:C.orange, color:C.white, border:'none', borderRadius:10, padding:'0 14px', cursor:'pointer', fontWeight:900, fontSize:18, flexShrink:0 }}>+</button>
+                </div>
+
+                {/* Check / Uncheck all */}
+                <div style={{ marginTop:8, display:'flex', gap:8 }}>
+                  {catChecked < allItems.length && <button onClick={()=>checkCat(cat)} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 12px', fontSize:12, color:C.muted, cursor:'pointer' }}>Check all</button>}
+                  {catChecked > 0 && <button onClick={()=>uncheckCat(cat)} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'5px 12px', fontSize:12, color:C.muted, cursor:'pointer' }}>Uncheck all</button>}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div style={{ height:20 }} />
+    </div>
+  );
+}
+
+// ── RECIPE DETAIL ──────────────────────────────────────────────────────────
+function RecipeDetail({ recipe, servings, pantry, onBack, shoppingList, setShoppingList }) {
+  const r = useMemo(() => scoreRecipe(recipe, pantry), [recipe, pantry]);
+  const [added, setAdded] = useState(false);
+
+  const handleAddToShopping = () => {
+    addMissingToShopping(r, shoppingList, setShoppingList);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2500);
+  };
+
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      <button onClick={onBack} style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:6, color:C.orange, fontWeight:700, fontSize:14, marginBottom:20 }}>← Back to results</button>
+      <div style={{ background:`linear-gradient(135deg,${C.orangeLight},#FDE68A)`, borderRadius:22, padding:'26px 18px', marginBottom:20, textAlign:'center' }}>
+        <div style={{ fontSize:62, marginBottom:10 }}>{r.emoji}</div>
+        <div style={{ fontSize:25, fontWeight:900, color:C.brown, marginBottom:6 }}>{r.name}</div>
+        <div style={{ fontSize:14, color:C.muted, lineHeight:1.5, maxWidth:300, margin:'0 auto' }}>{r.desc}</div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:18 }}>
+        {[{ icon:'⏱', val:r.time, label:'Time' },{ icon:'🍽', val:`${servings} srv`, label:'Servings' },{ icon:'✅', val:`${r.score}%`, label:'Match' }].map(s => (
+          <div key={s.label} style={{ background:C.white, borderRadius:14, padding:'12px 6px', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize:20 }}>{s.icon}</div>
+            <div style={{ fontWeight:800, fontSize:15, color:C.orange, marginTop:2 }}>{s.val}</div>
+            <div style={{ fontSize:11, color:C.muted, marginTop:1 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <SCard>
+        <STitle>🛒 Ingredients</STitle>
+        {r.ing.map((ing,i) => {
+          const have = Object.entries(pantry).filter(([,v])=>v).some(([k]) => { const kl=k.toLowerCase(),il=ing.toLowerCase(); return kl.includes(il)||il.includes(kl)||tokenMatch(il,kl); });
+          return (
+            <div key={ing} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 0', borderBottom:i<r.ing.length-1?`1px solid ${C.border}`:'none' }}>
+              <span style={{ fontSize:17 }}>{have ? '✅' : '❌'}</span>
+              <span style={{ fontSize:14, flex:1, color:have?C.text:C.muted, textDecoration:have?'none':'line-through' }}>{ing}</span>
+              {!have && <span style={{ fontSize:11, background:C.redLight, color:C.red, padding:'2px 8px', borderRadius:8, flexShrink:0 }}>Need to buy</span>}
+            </div>
+          );
+        })}
+      </SCard>
+      {r.missing && r.missing.length > 0 && (
+        <button onClick={handleAddToShopping} className="tap" style={{ width:'100%', padding:'14px 20px', borderRadius:16, border:'none', cursor:'pointer', fontWeight:700, fontSize:15, marginBottom:16, background: added ? C.green : C.orange, color:C.white, transition:'background 0.3s', boxShadow:`0 4px 16px ${added?C.green:C.orange}50` }}>
+          {added ? '✅ Added to Shopping List!' : `🛍 Add ${r.missing.length} missing item${r.missing.length!==1?'s':''} to Shopping List`}
+        </button>
+      )}
+      {/* Method steps */}
+      {METHODS[r.id] && (
+        <SCard>
+          <STitle>👩‍🍳 How to Make It</STitle>
+          {METHODS[r.id].map((step, i) => (
+            <div key={i} style={{ display:'flex', gap:12, padding:'10px 0', borderBottom: i < METHODS[r.id].length - 1 ? `1px solid ${C.border}` : 'none' }}>
+              <div style={{ width:26, height:26, borderRadius:13, background:C.orange, color:C.white, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:13, flexShrink:0, marginTop:1 }}>{i + 1}</div>
+              <div style={{ fontSize:14, color:C.text, lineHeight:1.65 }}>{step}</div>
+            </div>
+          ))}
+        </SCard>
+      )}
+
+      {r.tip && (
+        <div style={{ background:C.orangeLight, borderRadius:16, padding:16, display:'flex', gap:10 }}>
+          <span style={{ fontSize:20, flexShrink:0 }}>💡</span>
+          <div><div style={{ fontWeight:700, fontSize:14, color:C.brown, marginBottom:3 }}>Chef's Tip</div><div style={{ fontSize:14, color:C.brown, lineHeight:1.6 }}>{r.tip}</div></div>
+        </div>
+      )}
+      <div style={{ height:24 }} />
+    </div>
+  );
+}
+
+// ── FINDER ─────────────────────────────────────────────────────────────────
+function FinderScreen({ pantry, family, allRecipes, onSelectRecipe, shoppingList, setShoppingList }) {
+  const [mealType, setMealType] = useState('dinner');
+  const [servings, setServings] = useState(() => Math.max(2,(family.members||[]).length||4));
+  const [filterActive, setFilterActive] = useState(false);
+  const [showFilterInfo, setShowFilterInfo] = useState(false);
+  const checkedCount = Object.values(pantry).filter(Boolean).length;
+  const hasPrefs = (family.dietaryPrefs||[]).length > 0 || (family.allergies||[]).length > 0;
+
+  const results = useMemo(() => {
+    let recipes = matchRecipes(pantry, mealType, allRecipes);
+    if (filterActive && hasPrefs) recipes = filterByFamily(recipes, family);
+    return recipes;
+  }, [pantry, mealType, allRecipes, filterActive, family]);
+
+  const canMake = results.filter(r => r.score >= 75);
+  const almost = results.filter(r => r.score >= 40 && r.score < 75);
+
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      <div style={{ fontSize:24, fontWeight:900, color:C.brown, marginBottom:4 }}>Find Meals 🔍</div>
+      <div style={{ fontSize:13, color:C.muted, marginBottom:18, lineHeight:1.5 }}>Based on {checkedCount} items checked in your pantry.</div>
+
+      {/* Meal type */}
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:13, fontWeight:600, color:C.muted, marginBottom:9 }}>Meal Type</div>
+        <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:4 }}>
+          {MEAL_TYPES.map(mt => {
+            const active = mealType === mt.id;
+            return (
+              <button key={mt.id} onClick={()=>setMealType(mt.id)} style={{ flexShrink:0, padding:'9px 13px', borderRadius:13, cursor:'pointer', border:`2px solid ${active?C.orange:C.border}`, background:active?C.orangeLight:C.white, color:active?C.orangeDark:C.muted, fontWeight:active?700:400, display:'flex', flexDirection:'column', alignItems:'center', gap:3, transition:'all 0.18s', fontSize:12 }}>
+                <span style={{ fontSize:20 }}>{mt.emoji}</span><span>{mt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Servings + filter */}
+      <SCard style={{ marginBottom:16 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: hasPrefs ? 14 : 0 }}>
+          <div>
+            <div style={{ fontWeight:700, fontSize:14, color:C.brown }}>👥 Servings</div>
+            <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>How many people?</div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <button onClick={()=>setServings(s=>Math.max(1,s-1))} style={{ width:34,height:34,borderRadius:10,border:'none',background:C.cream,color:C.text,fontSize:20,cursor:'pointer',fontWeight:900,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>−</button>
+            <span style={{ fontSize:24,fontWeight:900,color:C.orange,minWidth:26,textAlign:'center' }}>{servings}</span>
+            <button onClick={()=>setServings(s=>Math.min(20,s+1))} style={{ width:34,height:34,borderRadius:10,border:'none',background:C.cream,color:C.text,fontSize:20,cursor:'pointer',fontWeight:900,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>+</button>
+          </div>
+        </div>
+        {hasPrefs && (
+          <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:C.brown }}>🥗 Family Filter</div>
+              <div style={{ fontSize:12, color:C.muted, marginTop:1 }}>
+                {[...(family.dietaryPrefs||[]),...(family.allergies||[])].slice(0,2).join(', ')}{(family.dietaryPrefs||[]).length+(family.allergies||[]).length>2?' + more':''}
+              </div>
+            </div>
+            <div onClick={()=>setFilterActive(!filterActive)} style={{ width:48, height:28, borderRadius:14, background:filterActive?C.green:C.border, padding:'4px', display:'flex', alignItems:'center', justifyContent:filterActive?'flex-end':'flex-start', cursor:'pointer', transition:'all 0.25s', flexShrink:0 }}>
+              <div style={{ width:20, height:20, borderRadius:10, background:C.white, boxShadow:'0 1px 4px rgba(0,0,0,0.25)', transition:'all 0.25s' }} />
+            </div>
+          </div>
+        )}
+      </SCard>
+
+      {/* Results */}
+      {checkedCount === 0 ? (
+        <EmptyState emoji="🛒" title="Pantry is empty" body="Head to the Pantry tab and check off what you have at home." />
+      ) : canMake.length === 0 && almost.length === 0 ? (
+        <EmptyState emoji="😕" title="No matches found" body="Try checking more pantry items, or switch meal type." />
+      ) : (
+        <>
+          {canMake.length > 0 && (
+            <div style={{ marginBottom:16 }}>
+              <div style={{ background:C.greenLight, borderRadius:10, padding:'6px 14px', display:'inline-block', marginBottom:12 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:'#065F46' }}>✅ You can make these now ({canMake.length})</span>
+              </div>
+              {canMake.map(r => <RCard key={r.id} recipe={r} servings={servings} onSelect={()=>onSelectRecipe(r,servings)} />)}
+            </div>
+          )}
+          {almost.length > 0 && (
+            <div style={{ marginBottom:16 }}>
+              <div style={{ background:C.amberLight, borderRadius:10, padding:'6px 14px', display:'inline-block', marginBottom:12 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:'#92400E' }}>🛍 A few items short ({almost.length})</span>
+              </div>
+              {almost.map(r => <RCard key={r.id} recipe={r} servings={servings} onSelect={()=>onSelectRecipe(r,servings)} />)}
+            </div>
+          )}
+        </>
+      )}
+      <div style={{ height:20 }} />
+    </div>
+  );
+}
+
+function RCard({ recipe, servings, onSelect }) {
+  return (
+    <div className="tap" onClick={onSelect} style={{ background:C.white, borderRadius:16, padding:'13px 15px', marginBottom:10, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', borderLeft:`4px solid ${recipe.score>=75?C.green:recipe.score>=50?C.amber:C.red}` }}>
+      <div style={{ display:'flex', alignItems:'flex-start', gap:11, marginBottom:5 }}>
+        <span style={{ fontSize:30, flexShrink:0 }}>{recipe.emoji}</span>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:2 }}>
+            <span style={{ fontWeight:700, fontSize:14, color:C.brown }}>{recipe.name}</span>
+            <ScoreBadge score={recipe.score} />
+          </div>
+          <div style={{ fontSize:12, color:C.muted }}>⏱ {recipe.time} · 🍽 {servings} serving{servings!==1?'s':''}</div>
+        </div>
+      </div>
+      <div style={{ fontSize:13, color:C.muted, lineHeight:1.5, marginBottom:recipe.missing?.length>0?5:0 }}>{recipe.desc}</div>
+      {recipe.missing?.length > 0 && <div style={{ fontSize:12, color:C.red }}>Missing: {recipe.missing.slice(0,3).join(', ')}{recipe.missing.length>3?` +${recipe.missing.length-3} more`:''}</div>}
+    </div>
+  );
+}
+
+// ── PLAN SCREEN (Meal Planner + Shopping List) ─────────────────────────────
+function PlanScreen({ mealPlan, setMealPlan, pantry, family, allRecipes, shoppingList, setShoppingList }) {
+  const [subTab, setSubTab] = useState('planner');
+  const [pickerSlot, setPickerSlot] = useState(null); // { day, slotType }
+
+  const assignRecipe = (recipe) => {
+    if (!pickerSlot) return;
+    setMealPlan(p => ({ ...p, [pickerSlot.day]:{ ...(p[pickerSlot.day]||{}), [pickerSlot.slotType]:recipe } }));
+    setPickerSlot(null);
+  };
+
+  const clearSlot = (day, slotType) => {
+    setMealPlan(p => { const n={...p}; if(n[day]) { n[day]={...n[day]}; delete n[day][slotType]; } return n; });
+  };
+
+  const generateShoppingList = () => {
+    const missing = {};
+    DAYS.forEach(day => {
+      MEAL_SLOT_TYPES.forEach(slot => {
+        const r = mealPlan[day]?.[slot.id];
+        if (!r) return;
+        const scored = scoreRecipe(r, pantry);
+        (scored.missing || []).forEach(ing => {
+          if (!missing[ing]) missing[ing] = { checked:false, from:[] };
+          if (!missing[ing].from.includes(r.name)) missing[ing].from.push(r.name);
+        });
+      });
+    });
+    setShoppingList(sl => {
+      const updated = { ...sl };
+      Object.entries(missing).forEach(([k,v]) => {
+        if (updated[k]) {
+          const existing = updated[k].from || [];
+          v.from.forEach(src => { if (!existing.includes(src)) existing.push(src); });
+          updated[k] = { ...updated[k], from:existing };
+        } else {
+          updated[k] = v;
+        }
+      });
+      return updated;
+    });
+    setSubTab('shopping');
+  };
+
+  const plannedCount = DAYS.reduce((a,day) => a + MEAL_SLOT_TYPES.filter(s=>mealPlan[day]?.[s.id]).length, 0);
+
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      <div style={{ fontSize:24, fontWeight:900, color:C.brown, marginBottom:4 }}>Plan & Shop 📅</div>
+      <div style={{ fontSize:13, color:C.muted, marginBottom:18, lineHeight:1.5 }}>Plan your week, then build your shopping list automatically.</div>
+
+      {/* Sub-tab switcher */}
+      <div style={{ display:'flex', gap:8, background:C.white, borderRadius:14, padding:4, marginBottom:20, boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+        {[{ id:'planner', label:'📅 Week Plan' },{ id:'shopping', label:`🛍 Shopping List${Object.keys(shoppingList).length>0?' ('+Object.keys(shoppingList).length+')':''}` }].map(t => (
+          <button key={t.id} onClick={()=>setSubTab(t.id)} style={{ flex:1, padding:'10px 8px', borderRadius:11, border:'none', cursor:'pointer', fontWeight:subTab===t.id?700:500, fontSize:13, background:subTab===t.id?C.orange:C.white, color:subTab===t.id?C.white:C.muted, transition:'all 0.18s' }}>{t.label}</button>
+        ))}
+      </div>
+
+      {subTab === 'planner' && (
+        <>
+          {DAYS.map(day => {
+            const dayPlan = mealPlan[day] || {};
+            const hasAny = MEAL_SLOT_TYPES.some(s => dayPlan[s.id]);
+            return (
+              <SCard key={day} style={{ padding:'14px 16px', marginBottom:10 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                  <div style={{ fontWeight:800, fontSize:15, color:C.brown }}>{day}</div>
+                  {hasAny && <div style={{ fontSize:11, color:C.muted }}>{MEAL_SLOT_TYPES.filter(s=>dayPlan[s.id]).length} meal{MEAL_SLOT_TYPES.filter(s=>dayPlan[s.id]).length!==1?'s':''} planned</div>}
+                </div>
+                {MEAL_SLOT_TYPES.map(slot => {
+                  const recipe = dayPlan[slot.id];
+                  return (
+                    <div key={slot.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.border}` }}>
+                      <span style={{ fontSize:16, flexShrink:0 }}>{slot.emoji}</span>
+                      <span style={{ fontSize:12, color:C.muted, width:62, flexShrink:0 }}>{slot.label}</span>
+                      {recipe ? (
+                        <>
+                          <span style={{ fontSize:14, fontWeight:600, color:C.text, flex:1 }}>{recipe.emoji} {recipe.name}</span>
+                          <button onClick={()=>clearSlot(day,slot.id)} style={{ background:'none', border:'none', cursor:'pointer', color:C.red, fontSize:16, padding:'0 4px', flexShrink:0 }}>×</button>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ flex:1, fontSize:13, color:C.border }}>— not planned</span>
+                          <button onClick={()=>setPickerSlot({day,slotType:slot.id})} style={{ background:C.orangeLight, border:'none', borderRadius:8, padding:'5px 12px', cursor:'pointer', fontSize:12, color:C.orangeDark, fontWeight:700, flexShrink:0 }}>+ Add</button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </SCard>
+            );
+          })}
+          {plannedCount > 0 && (
+            <button onClick={generateShoppingList} className="tap" style={{ width:'100%', padding:'15px 20px', borderRadius:16, border:'none', cursor:'pointer', fontWeight:700, fontSize:15, background:C.green, color:C.white, boxShadow:`0 4px 16px ${C.green}50`, marginTop:8 }}>
+              🛍 Generate Shopping List ({plannedCount} meal{plannedCount!==1?'s':''} planned)
+            </button>
+          )}
+          <div style={{ height:24 }} />
+        </>
+      )}
+
+      {subTab === 'shopping' && (
+        <ShoppingListView shoppingList={shoppingList} setShoppingList={setShoppingList} pantry={pantry} setPantry={() => {}} />
+      )}
+
+      {/* Meal Picker sheet */}
+      <BottomSheet open={!!pickerSlot} onClose={()=>setPickerSlot(null)} title={`Pick a ${pickerSlot ? MEAL_SLOT_TYPES.find(s=>s.id===pickerSlot.slotType)?.label : ''}`}>
+        {pickerSlot && (
+          <MealPicker
+            mealType={pickerSlot.slotType}
+            pantry={pantry}
+            allRecipes={allRecipes}
+            family={family}
+            onSelect={assignRecipe} />
+        )}
+      </BottomSheet>
+    </div>
+  );
+}
+
+function MealPicker({ mealType, pantry, allRecipes, family, onSelect }) {
+  const [search, setSearch] = useState('');
+  const results = useMemo(() => matchRecipes(pantry, mealType, allRecipes), [pantry, mealType, allRecipes]);
+  const filtered = search ? results.filter(r => r.name.toLowerCase().includes(search.toLowerCase())) : results;
+
+  return (
+    <div>
+      <input style={{ ...INPUT, marginBottom:12 }} placeholder="Search meals..." value={search} onChange={e=>setSearch(e.target.value)} />
+      {filtered.length === 0 && <div style={{ textAlign:'center', padding:24, color:C.muted }}>No meals found for "{search}"</div>}
+      {filtered.map(r => (
+        <div key={r.id} className="tap" onClick={()=>onSelect(r)} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:14, background:C.cream, marginBottom:8, cursor:'pointer' }}>
+          <span style={{ fontSize:26 }}>{r.emoji}</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, fontSize:14, color:C.brown }}>{r.name}</div>
+            <div style={{ fontSize:12, color:C.muted }}>⏱ {r.time}</div>
+          </div>
+          <ScoreBadge score={r.score} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShoppingListView({ shoppingList, setShoppingList, pantry }) {
+  const [manualItem, setManualItem] = useState('');
+  const toggleItem = (key) => setShoppingList(sl => ({ ...sl, [key]:{ ...sl[key], checked:!sl[key].checked } }));
+  const removeItem = (key) => setShoppingList(sl => { const n={...sl}; delete n[key]; return n; });
+  const clearChecked = () => setShoppingList(sl => { const n={}; Object.entries(sl).forEach(([k,v])=>{ if(!v.checked) n[k]=v; }); return n; });
+  const addManual = () => {
+    if (!manualItem.trim()) return;
+    setShoppingList(sl => ({ ...sl, [manualItem.trim()]:{ checked:false, from:['manual'] } }));
+    setManualItem('');
+  };
+
+  const items = Object.entries(shoppingList);
+  const unchecked = items.filter(([,v])=>!v.checked);
+  const checked = items.filter(([,v])=>v.checked);
+
+  // Group by pantry category
+  const grouped = useMemo(() => {
+    const groups = {};
+    unchecked.forEach(([k,v]) => {
+      const cat = getIngCategory(k);
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push([k,v]);
+    });
+    return groups;
+  }, [unchecked]);
+
+  if (items.length === 0) {
+    return (
+      <>
+        <EmptyState emoji="🛍" title="Shopping list is empty" body="Assign meals to your week plan and tap 'Generate Shopping List', or add items manually below." />
+        <div style={{ display:'flex', gap:8, marginTop:16 }}>
+          <input style={{ ...INPUT, flex:1 }} placeholder="Add item manually..." value={manualItem} onChange={e=>setManualItem(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addManual()} />
+          <button onClick={addManual} style={{ background:C.orange, color:C.white, border:'none', borderRadius:12, padding:'0 16px', cursor:'pointer', fontWeight:900, fontSize:20, flexShrink:0 }}>+</button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+        <input style={{ ...INPUT, flex:1 }} placeholder="Add item..." value={manualItem} onChange={e=>setManualItem(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addManual()} />
+        <button onClick={addManual} style={{ background:C.orange, color:C.white, border:'none', borderRadius:12, padding:'0 16px', cursor:'pointer', fontWeight:900, fontSize:20, flexShrink:0 }}>+</button>
+      </div>
+
+      {unchecked.length > 0 && (
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:C.brown, marginBottom:10 }}>To buy ({unchecked.length})</div>
+          {Object.entries(grouped).map(([cat, catItems]) => (
+            <div key={cat} style={{ background:C.white, borderRadius:14, padding:'10px 14px', marginBottom:8, boxShadow:'0 2px 6px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:C.muted, marginBottom:8, textTransform:'uppercase', letterSpacing:0.5 }}>
+                {MASTER_INGREDIENTS.find(c=>c.category===cat)?.emoji || '📦'} {cat}
+              </div>
+              {catItems.map(([k,v]) => (
+                <div key={k} style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0', borderBottom:`1px solid ${C.border}` }}>
+                  <Check small checked={false} onChange={()=>toggleItem(k)} label={k} />
+                  <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6 }}>
+                    {v.from && v.from.length > 0 && v.from[0] !== 'manual' && (
+                      <span style={{ fontSize:10, color:C.muted, background:C.cream, borderRadius:8, padding:'2px 8px' }}>
+                        {v.from.length === 1 ? v.from[0] : `${v.from.length} recipes`}
+                      </span>
+                    )}
+                    <button onClick={()=>removeItem(k)} style={{ background:'none', border:'none', cursor:'pointer', color:C.red, fontSize:16, lineHeight:1 }}>×</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {checked.length > 0 && (
+        <div style={{ marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:C.muted }}>Got it ✅ ({checked.length})</div>
+            <button onClick={clearChecked} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:8, padding:'4px 12px', fontSize:12, color:C.muted, cursor:'pointer' }}>Clear done</button>
+          </div>
+          {checked.map(([k,v]) => (
+            <div key={k} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 14px', background:C.greenLight, borderRadius:12, marginBottom:6 }}>
+              <Check small checked onChange={()=>toggleItem(k)} label={k} />
+              <button onClick={()=>removeItem(k)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:16, lineHeight:1 }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ height:20 }} />
+    </div>
+  );
+}
+
+// ── FAMILY SCREEN (with Custom Recipes) ───────────────────────────────────
+function FamilyScreen({ family, setFamily, customRecipes, setCustomRecipes }) {
+  const [newName, setNewName] = useState('');
+  const [newAge, setNewAge]   = useState('');
+  const [showAddRecipe, setShowAddRecipe] = useState(false);
+
+  const addMember = () => {
+    if (!newName.trim()) return;
+    setFamily(f=>({...f,members:[...(f.members||[]),{name:newName.trim(),age:newAge.trim()}]}));
+    setNewName(''); setNewAge('');
+  };
+  const removeMember = i => setFamily(f=>({...f,members:f.members.filter((_,j)=>j!==i)}));
+  const toggle = (key, val) => setFamily(f=>{ const arr=f[key]||[]; return {...f,[key]:arr.includes(val)?arr.filter(x=>x!==val):[...arr,val]}; });
+  const memberEmoji = (age) => { const n=parseInt(age); if(isNaN(n)) return '🧑'; if(n<5) return '👶'; if(n<13) return '🧒'; if(n<18) return '👦'; return '🧑'; };
+  const deleteCustom = id => setCustomRecipes(r=>r.filter(x=>x.id!==id));
+
+  return (
+    <div className="screen" style={{ padding:'24px 20px' }}>
+      <div style={{ fontSize:24, fontWeight:900, color:C.brown, marginBottom:4 }}>Family Setup 👨‍👩‍👧</div>
+      <div style={{ fontSize:13, color:C.muted, marginBottom:22, lineHeight:1.5 }}>Personalize Luvi for your family.</div>
+
+      <SCard>
+        <STitle>🏡 Home Info</STitle>
+        <div style={{ marginBottom:12 }}>
+          <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Family Name</label>
+          <input style={INPUT} placeholder="e.g. The Smith Family" value={family.name||''} onChange={e=>setFamily(f=>({...f,name:e.target.value}))} />
+        </div>
+        <div>
+          <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Location (optional)</label>
+          <input style={INPUT} placeholder="e.g. Austin, TX" value={family.location||''} onChange={e=>setFamily(f=>({...f,location:e.target.value}))} />
+        </div>
+      </SCard>
+
+      <SCard>
+        <STitle>👥 Family Members</STitle>
+        {(family.members||[]).map((m,i) => (
+          <div key={i} style={{ display:'flex', alignItems:'center', gap:10, background:C.cream, borderRadius:12, padding:'9px 13px', marginBottom:7 }}>
+            <span style={{ fontSize:22 }}>{memberEmoji(m.age)}</span>
+            <div style={{ flex:1 }}><div style={{ fontWeight:600, fontSize:14 }}>{m.name}</div>{m.age&&<div style={{ fontSize:12, color:C.muted }}>Age {m.age}</div>}</div>
+            <button onClick={()=>removeMember(i)} style={{ background:'none', border:'none', cursor:'pointer', color:C.red, fontSize:20 }}>×</button>
+          </div>
+        ))}
+        <div style={{ display:'flex', gap:8, marginTop:4 }}>
+          <input style={{ ...INPUT, flex:2 }} placeholder="Name" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addMember()} />
+          <input style={{ ...INPUT, flex:1 }} placeholder="Age" type="number" min="0" value={newAge} onChange={e=>setNewAge(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addMember()} />
+          <button onClick={addMember} style={{ background:C.orange, color:C.white, border:'none', borderRadius:12, padding:'0 15px', cursor:'pointer', fontWeight:900, fontSize:22, flexShrink:0 }}>+</button>
+        </div>
+      </SCard>
+
+      <SCard>
+        <STitle>🥗 Dietary Preferences</STitle>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+          {DIETARY_OPTIONS.map(p => <Pill key={p} selected={(family.dietaryPrefs||[]).includes(p)} onClick={()=>toggle('dietaryPrefs',p)}>{p}</Pill>)}
+        </div>
+      </SCard>
+
+      <SCard>
+        <STitle>⚠️ Allergies</STitle>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+          {ALLERGY_OPTIONS.map(a => <Pill key={a} selected={(family.allergies||[]).includes(a)} onClick={()=>toggle('allergies',a)}>{a}</Pill>)}
+        </div>
+      </SCard>
+
+      <SCard>
+        <STitle>❤️ Food Preferences & Notes</STitle>
+        <textarea style={{ ...INPUT, minHeight:88, resize:'vertical', lineHeight:1.5 }}
+          placeholder="e.g. Kids love pasta, everyone hates mushrooms, prefer mild spices..."
+          value={family.preferences||''} onChange={e=>setFamily(f=>({...f,preferences:e.target.value}))} />
+      </SCard>
+
+      {/* Custom Recipes */}
+      <SCard>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+          <STitle>📖 My Recipes ({customRecipes.length})</STitle>
+          <button onClick={()=>setShowAddRecipe(true)} style={{ background:C.orange, color:C.white, border:'none', borderRadius:10, padding:'7px 14px', cursor:'pointer', fontWeight:700, fontSize:13 }}>+ Add</button>
+        </div>
+        {customRecipes.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'16px 0', color:C.muted, fontSize:14 }}>Add your own family recipes to Luvi — they'll show up in meal suggestions just like the built-in ones.</div>
+        ) : (
+          customRecipes.map(r => (
+            <div key={r.id} style={{ display:'flex', alignItems:'center', gap:10, background:C.cream, borderRadius:12, padding:'10px 14px', marginBottom:8 }}>
+              <span style={{ fontSize:24 }}>{r.emoji}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700, fontSize:14 }}>{r.name}</div>
+                <div style={{ fontSize:12, color:C.muted }}>{MEAL_TYPES.find(m=>m.id===r.type)?.label} · {r.time}</div>
+              </div>
+              <button onClick={()=>deleteCustom(r.id)} style={{ background:'none', border:'none', cursor:'pointer', color:C.red, fontSize:18 }}>×</button>
+            </div>
+          ))
+        )}
+      </SCard>
+
+      <div style={{ background:C.greenLight, borderRadius:12, padding:14, display:'flex', gap:10, alignItems:'center', marginBottom:24 }}>
+        <span style={{ fontSize:18 }}>✅</span>
+        <div style={{ fontSize:13, color:'#065F46' }}>Everything saves automatically as you type!</div>
+      </div>
+
+      <BottomSheet open={showAddRecipe} onClose={()=>setShowAddRecipe(false)} title="Add Your Recipe">
+        <AddRecipeForm onSave={r=>{ setCustomRecipes(c=>[...c,r]); setShowAddRecipe(false); }} />
+      </BottomSheet>
+    </div>
+  );
+}
+
+function AddRecipeForm({ onSave }) {
+  const [form, setForm] = useState({ name:'', type:'dinner', time:'30 min', base:4, desc:'', tip:'', ingsRaw:'', emoji:RECIPE_EMOJIS[0] });
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const handleSave = () => {
+    if (!form.name.trim() || !form.ingsRaw.trim()) return;
+    const ing = form.ingsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+    const recipe = { id:`custom_${Date.now()}`, name:form.name.trim(), type:form.type, time:form.time, base:parseInt(form.base)||4, desc:form.desc, tip:form.tip, ing, emoji:form.emoji, isCustom:true };
+    onSave(recipe);
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom:12 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Emoji</label>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+          {RECIPE_EMOJIS.map(e => (
+            <button key={e} onClick={()=>set('emoji',e)} style={{ width:38, height:38, borderRadius:10, border:`2px solid ${form.emoji===e?C.orange:C.border}`, background:form.emoji===e?C.orangeLight:C.white, fontSize:20, cursor:'pointer' }}>{e}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom:10 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Recipe Name *</label>
+        <input style={INPUT} placeholder="e.g. Grandma's Chicken Soup" value={form.name} onChange={e=>set('name',e.target.value)} />
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+        <div>
+          <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Meal Type</label>
+          <select style={{ ...INPUT }} value={form.type} onChange={e=>set('type',e.target.value)}>
+            {MEAL_TYPES.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Cook Time</label>
+          <input style={INPUT} placeholder="30 min" value={form.time} onChange={e=>set('time',e.target.value)} />
+        </div>
+      </div>
+      <div style={{ marginBottom:10 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Base Servings</label>
+        <input style={INPUT} type="number" min="1" placeholder="4" value={form.base} onChange={e=>set('base',e.target.value)} />
+      </div>
+      <div style={{ marginBottom:10 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Ingredients (comma-separated) *</label>
+        <textarea style={{ ...INPUT, minHeight:80, resize:'vertical' }}
+          placeholder="Chicken breast, Rice, Garlic, Olive oil, Salt..."
+          value={form.ingsRaw} onChange={e=>set('ingsRaw',e.target.value)} />
+      </div>
+      <div style={{ marginBottom:10 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Short Description</label>
+        <input style={INPUT} placeholder="A short description of this dish..." value={form.desc} onChange={e=>set('desc',e.target.value)} />
+      </div>
+      <div style={{ marginBottom:18 }}>
+        <label style={{ fontSize:12, color:C.muted, display:'block', marginBottom:5 }}>Tip (optional)</label>
+        <input style={INPUT} placeholder="Your secret tip for this recipe..." value={form.tip} onChange={e=>set('tip',e.target.value)} />
+      </div>
+      <button onClick={handleSave} className="tap" style={{ width:'100%', padding:'14px', borderRadius:14, border:'none', cursor:'pointer', fontWeight:800, fontSize:15, background:C.orange, color:C.white, boxShadow:`0 4px 16px ${C.orange}50` }}>
+        Save Recipe
+      </button>
+    </div>
+  );
+}
+
+// ── HOUSEHOLD SETUP ───────────────────────────────────────────────────────
+function HouseholdSetup({ onJoin }) {
+  const [mode, setMode]   = useState(null); // 'create' | 'join'
+  const [code, setCode]   = useState('');
+  const [newCode, setNewCode] = useState('');
+  const [copied, setCopied]   = useState(false);
+  const [error, setError]     = useState('');
+
+  const createHousehold = () => {
+    const generated = Math.random().toString(36).substr(2, 6).toUpperCase();
+    setNewCode(generated);
+    setMode('create');
+  };
+
+  const confirmCreate = () => {
+    localStorage.setItem('luvi_household', newCode);
+    onJoin(newCode);
+  };
+
+  const joinHousehold = () => {
+    const clean = code.trim().toUpperCase();
+    if (clean.length < 4) { setError('Please enter a valid household code.'); return; }
+    localStorage.setItem('luvi_household', clean);
+    onJoin(clean);
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(newCode).catch(()=>{});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:C.cream, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 24px' }}>
+      <div style={{ width:64, height:64, borderRadius:18, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:32, boxShadow:'0 6px 24px rgba(249,115,22,0.35)', marginBottom:20 }}>🍽</div>
+      <div style={{ fontSize:32, fontWeight:900, color:C.orange, letterSpacing:-1, marginBottom:6 }}>Luvi</div>
+      <div style={{ fontSize:15, color:C.muted, marginBottom:36, textAlign:'center', lineHeight:1.6 }}>Family meal prep, made easy.<br/>Set up your household to get started.</div>
+
+      {!mode && (
+        <div style={{ width:'100%' }}>
+          <button className="tap" onClick={createHousehold} style={{ width:'100%', padding:'18px 24px', borderRadius:18, border:'none', cursor:'pointer', background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, color:C.white, fontWeight:800, fontSize:17, marginBottom:14, boxShadow:'0 6px 20px rgba(249,115,22,0.35)' }}>
+            🏠 Create a new household
+          </button>
+          <button className="tap" onClick={()=>setMode('join')} style={{ width:'100%', padding:'18px 24px', borderRadius:18, border:`2px solid ${C.border}`, cursor:'pointer', background:C.white, color:C.brown, fontWeight:700, fontSize:17 }}>
+            🔗 Join an existing household
+          </button>
+        </div>
+      )}
+
+      {mode === 'create' && (
+        <div className="screen" style={{ width:'100%' }}>
+          <div style={{ background:C.white, borderRadius:20, padding:24, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', marginBottom:16, textAlign:'center' }}>
+            <div style={{ fontSize:14, color:C.muted, marginBottom:12 }}>Your household code</div>
+            <div style={{ fontSize:42, fontWeight:900, color:C.orange, letterSpacing:6, marginBottom:16 }}>{newCode}</div>
+            <button onClick={copyCode} style={{ background:copied?C.greenLight:C.orangeLight, border:'none', borderRadius:12, padding:'10px 22px', cursor:'pointer', fontWeight:700, fontSize:14, color:copied?'#065F46':C.orangeDark, transition:'all 0.2s' }}>
+              {copied ? '✅ Copied!' : '📋 Copy code'}
+            </button>
+          </div>
+          <div style={{ background:C.amberLight, borderRadius:14, padding:14, marginBottom:20, display:'flex', gap:10 }}>
+            <span style={{ fontSize:18 }}>💡</span>
+            <div style={{ fontSize:13, color:'#92400E', lineHeight:1.5 }}>Share this code with your partner — they'll use it to join your household and see the same pantry, meal plan, and shopping list.</div>
+          </div>
+          <button className="tap" onClick={confirmCreate} style={{ width:'100%', padding:'16px', borderRadius:16, border:'none', cursor:'pointer', background:C.green, color:C.white, fontWeight:800, fontSize:16, boxShadow:`0 4px 16px ${C.green}50` }}>
+            Let's go! →
+          </button>
+          <button onClick={()=>setMode(null)} style={{ width:'100%', marginTop:12, background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:14, padding:'8px' }}>← Back</button>
+        </div>
+      )}
+
+      {mode === 'join' && (
+        <div className="screen" style={{ width:'100%' }}>
+          <div style={{ fontSize:15, fontWeight:700, color:C.brown, marginBottom:10 }}>Enter your household code</div>
+          <input
+            style={{ ...INPUT, fontSize:22, fontWeight:800, letterSpacing:4, textAlign:'center', textTransform:'uppercase', marginBottom:8 }}
+            placeholder="e.g. AB12CD"
+            maxLength={8}
+            value={code}
+            onChange={e=>{ setCode(e.target.value); setError(''); }}
+            onKeyDown={e=>e.key==='Enter'&&joinHousehold()}
+          />
+          {error && <div style={{ fontSize:13, color:C.red, marginBottom:8 }}>{error}</div>}
+          <div style={{ fontSize:13, color:C.muted, marginBottom:20, lineHeight:1.5 }}>Ask whoever created the household to share their 6-character code with you.</div>
+          <button className="tap" onClick={joinHousehold} style={{ width:'100%', padding:'16px', borderRadius:16, border:'none', cursor:'pointer', background:C.orange, color:C.white, fontWeight:800, fontSize:16, boxShadow:`0 4px 16px ${C.orange}50` }}>
+            Join household →
+          </button>
+          <button onClick={()=>setMode(null)} style={{ width:'100%', marginTop:12, background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:14, padding:'8px' }}>← Back</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── APP ROOT ──────────────────────────────────────────────────────────────
+function App() {
+  const [tab, setTab]           = useState('home');
+  const [kidsMode, setKidsMode] = useState(false);
+  const [selectedRecipe, setSelectedRecipe]   = useState(null);
+  const [selectedServings, setSelectedServings] = useState(4);
+
+  // Household / sync state
+  const [householdId, setHouseholdId] = useState(() => localStorage.getItem('luvi_household') || null);
+  const [loaded, setLoaded]           = useState(false);
+  const syncingFromRemote             = useRef(false);
+
+  // App data — starts empty, populated from Firestore
+  const [family,            setFamily]            = useState({});
+  const [pantry,            setPantry]            = useState({});
+  const [mealPlan,          setMealPlan]          = useState({});
+  const [shoppingList,      setShoppingList]      = useState({});
+  const [customRecipes,     setCustomRecipes]     = useState([]);
+  const [customPantryItems, setCustomPantryItems] = useState({});
+
+  // ── Subscribe to Firestore ────────────────────────────────────────────
+  useEffect(() => {
+    if (!householdId) return;
+    const docRef = db.collection('households').doc(householdId);
+    const unsub = docRef.onSnapshot(snap => {
+      syncingFromRemote.current = true;
+      if (!snap.exists) {
+        // Brand new household — seed empty document
+        docRef.set({ family:{}, pantry:{}, mealPlan:{}, shoppingList:{}, customRecipes:[], customPantryItems:{} });
+      } else {
+        const d = snap.data();
+        if (d.family            !== undefined) setFamily(d.family);
+        if (d.pantry            !== undefined) setPantry(d.pantry);
+        if (d.mealPlan          !== undefined) setMealPlan(d.mealPlan);
+        if (d.shoppingList      !== undefined) setShoppingList(d.shoppingList);
+        if (d.customRecipes     !== undefined) setCustomRecipes(d.customRecipes);
+        if (d.customPantryItems !== undefined) setCustomPantryItems(d.customPantryItems);
+      }
+      setLoaded(true);
+      requestAnimationFrame(() => { syncingFromRemote.current = false; });
+    }, err => {
+      console.error('Firestore error:', err);
+      setLoaded(true); // still show app even if offline
+    });
+    return () => unsub();
   }, [householdId]);
 
-  const allRecipes = RECIPES;
+  // ── Write to Firestore on every change ───────────────────────────────
+  const write = useCallback((data) => {
+    if (!householdId || syncingFromRemote.current) return;
+    db.collection('households').doc(householdId).set(data, { merge: true }).catch(console.error);
+  }, [householdId]);
+
+  useEffect(() => { write({ family });            }, [family]);
+  useEffect(() => { write({ pantry });            }, [pantry]);
+  useEffect(() => { write({ mealPlan });          }, [mealPlan]);
+  useEffect(() => { write({ shoppingList });      }, [shoppingList]);
+  useEffect(() => { write({ customRecipes });     }, [customRecipes]);
+  useEffect(() => { write({ customPantryItems }); }, [customPantryItems]);
+
+  // ── Household not set up yet ──────────────────────────────────────────
+  if (!householdId) {
+    return <HouseholdSetup onJoin={id => { setHouseholdId(id); setLoaded(false); }} />;
+  }
+
+  // ── Loading spinner while first Firestore snapshot arrives ────────────
+  if (!loaded) {
+    return (
+      <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:C.cream, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+        <div style={{ width:56, height:56, borderRadius:16, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26 }}>🍽</div>
+        <div style={{ fontSize:22, fontWeight:900, color:C.orange }}>Luvi</div>
+        <div style={{ fontSize:14, color:C.muted }}>Syncing your household…</div>
+      </div>
+    );
+  }
+
+  const allRecipes = useMemo(() => [...RECIPES, ...customRecipes], [customRecipes]);
+
+  const checkedCount    = Object.values(pantry).filter(Boolean).length;
+  const shoppingCount   = Object.keys(shoppingList).filter(k=>!shoppingList[k].checked).length;
+
+  const handleTabChange = (t) => { setTab(t); setSelectedRecipe(null); };
+
+  const NAV = [
+    { id:'home',    emoji:'🏠', label:'Home' },
+    { id:'pantry',  emoji:'🛒', label:'Pantry',   badge: checkedCount > 0 ? checkedCount : null },
+    { id:'finder',  emoji:'🔍', label:'Find' },
+    { id:'plan',    emoji:'📅', label:'Plan',      badge: shoppingCount > 0 ? shoppingCount : null },
+    { id:'family',  emoji:'👨‍👩‍👧', label:'Family' },
+  ];
 
   const renderScreen = () => {
-    if (kidsMode) return <div className="screen kids-bg" style={{ padding:'60px 20px', textAlign:'center' }}><div style={{fontSize:64}}>🧒</div><h2>Kids Mode</h2><p>Fun view coming soon with full branding.</p></div>;
+    if (kidsMode) return <KidsScreen pantry={pantry} allRecipes={allRecipes} />;
+    if (selectedRecipe) return <RecipeDetail recipe={selectedRecipe} servings={selectedServings} pantry={pantry} onBack={()=>setSelectedRecipe(null)} shoppingList={shoppingList} setShoppingList={setShoppingList} />;
     switch(tab) {
-      case 'home': return <HomeScreen family={family} pantry={pantry} setTab={setTab} kidsMode={kidsMode} setKidsMode={setKidsMode} />;
-      case 'pantry': return <div className="screen"><SCard><STitle>🛒 My Pantry</STitle><p>Full pantry screen with new elegant styling coming next round.</p></SCard></div>;
-      case 'finder': return <div className="screen"><SCard><STitle>🔍 Find Meals</STitle><p>Meal finder with beautiful cards coming next.</p></SCard></div>;
-      default: return <HomeScreen family={family} pantry={pantry} setTab={setTab} kidsMode={kidsMode} setKidsMode={setKidsMode} />;
+      case 'home':   return <HomeScreen family={family} pantry={pantry} allRecipes={allRecipes} setTab={handleTabChange} kidsMode={kidsMode} setKidsMode={setKidsMode} />;
+      case 'pantry': return <PantryScreen pantry={pantry} setPantry={setPantry} customPantryItems={customPantryItems} setCustomPantryItems={setCustomPantryItems} />;
+      case 'finder': return <FinderScreen pantry={pantry} family={family} allRecipes={allRecipes} onSelectRecipe={(r,s)=>{setSelectedRecipe(r);setSelectedServings(s);}} shoppingList={shoppingList} setShoppingList={setShoppingList} />;
+      case 'plan':   return <PlanScreen mealPlan={mealPlan} setMealPlan={setMealPlan} pantry={pantry} family={family} allRecipes={allRecipes} shoppingList={shoppingList} setShoppingList={setShoppingList} />;
+      case 'family': return <FamilyScreen family={family} setFamily={setFamily} customRecipes={customRecipes} setCustomRecipes={setCustomRecipes} />;
     }
   };
 
   return (
-    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background: C.cream, display:'flex', flexDirection:'column' }}>
-      <div style={{ background: C.surface, padding:'16px 20px', position:'sticky', top:0, zIndex:30, boxShadow:'0 2px 12px rgba(0,0,0,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div>
-          <div style={{ fontSize:26, fontWeight:800, color:C.sage }}>Luvi</div>
-          <div style={{ fontSize:12, color:C.muted }}>Montecito Kitchen • With Love</div>
-        </div>
-        {householdId && <div style={{ fontSize:12, color:C.muted }}>#{householdId}</div>}
+    <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:kidsMode?'linear-gradient(160deg,#FFF0E0,#FFF7ED,#E8F5E9)':C.cream, display:'flex', flexDirection:'column' }}>
+      {/* Header */}
+      <div style={{ background:kidsMode?'white':C.white, padding:'13px 18px', position:'sticky', top:0, zIndex:30, boxShadow:'0 2px 10px rgba(0,0,0,0.07)', display:'flex', alignItems:'center', gap:11 }}>
+        <button onClick={()=>{ handleTabChange('home'); setKidsMode(false); }} style={{ display:'flex', alignItems:'center', gap:11, background:'none', border:'none', cursor:'pointer', padding:0, flexShrink:0 }}>
+          <div style={{ width:38, height:38, borderRadius:12, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 3px 10px rgba(249,115,22,0.35)', flexShrink:0 }}>🍽</div>
+          <div style={{ textAlign:'left' }}>
+            <div style={{ fontWeight:900, fontSize:21, color:C.orange, letterSpacing:-0.5, lineHeight:1 }}>{kidsMode ? '🧒 Kids Mode' : 'Luvi'}</div>
+            <div style={{ fontSize:10, color:C.muted, lineHeight:1 }}>{kidsMode ? 'What do you want to eat?' : 'Family Meal Prep'}</div>
+          </div>
+        </button>
+        {!kidsMode && (
+          <div style={{ marginLeft:'auto', textAlign:'right' }}>
+            {family.name && <div style={{ fontSize:12, color:C.muted, fontStyle:'italic' }}>{family.name}</div>}
+            <div style={{ fontSize:10, color:C.border, letterSpacing:1, fontWeight:700 }}>#{householdId}</div>
+          </div>
+        )}
+        {kidsMode && <button onClick={()=>setKidsMode(false)} style={{ marginLeft:'auto', background:C.orangeLight, border:'none', borderRadius:10, padding:'6px 14px', cursor:'pointer', fontWeight:700, fontSize:12, color:C.orangeDark }}>Exit ×</button>}
       </div>
 
-      <div style={{ flex:1, overflowY:'auto', paddingBottom:80 }}>
+      {/* Screen */}
+      <div style={{ flex:1, overflowY:'auto', paddingBottom:kidsMode?24:80 }}>
         {renderScreen()}
       </div>
+
+      {/* Bottom nav (hidden in kids mode) */}
+      {!kidsMode && (
+        <div style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:480, background:C.white, zIndex:20, borderTop:`1px solid ${C.border}`, boxShadow:'0 -4px 20px rgba(0,0,0,0.09)', display:'flex' }}>
+          {NAV.map(n => {
+            const active = !selectedRecipe && tab === n.id;
+            return (
+              <button key={n.id} onClick={()=>handleTabChange(n.id)} style={{ flex:1, padding:'9px 4px 7px', background:'none', border:'none', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:2, position:'relative' }}>
+                <span style={{ fontSize:20, position:'relative' }}>
+                  {n.emoji}
+                  {n.badge && (
+                    <span style={{ position:'absolute', top:-4, right:-8, background:n.id==='plan'?C.blue:C.orange, color:C.white, borderRadius:10, fontSize:9, fontWeight:900, padding:'1px 5px', lineHeight:1.4 }}>{n.badge > 99 ? '99+' : n.badge}</span>
+                  )}
+                </span>
+                <span style={{ fontSize:9, fontWeight:active?700:400, color:active?C.orange:C.muted }}>{n.label}</span>
+                {active && <div style={{ position:'absolute', bottom:0, width:28, height:3, background:C.orange, borderRadius:'3px 3px 0 0' }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// Render safely
-setTimeout(() => {
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-}, 100);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
