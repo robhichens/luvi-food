@@ -9,6 +9,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase must be initialised in a plain script tag BEFORE Babel runs -->
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyCzWmaWMgjdMiNyVp3nca25tZDzuVXXFzE",
+      authDomain: "luvi-meals.firebaseapp.com",
+      projectId: "luvi-meals",
+      storageBucket: "luvi-meals.firebasestorage.app",
+      messagingSenderId: "268757552783",
+      appId: "1:268757552783:web:3522c10a0432d24e226afa"
+    });
+    window.__luviDb = firebase.firestore();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: #FFF7ED; }
@@ -33,16 +45,8 @@
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 // ── FIREBASE ───────────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCzWmaWMgjdMiNyVp3nca25tZDzuVXXFzE",
-  authDomain: "luvi-meals.firebaseapp.com",
-  projectId: "luvi-meals",
-  storageBucket: "luvi-meals.firebasestorage.app",
-  messagingSenderId: "268757552783",
-  appId: "1:268757552783:web:3522c10a0432d24e226afa"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// db is initialised in the plain <script> tag above, before Babel runs
+const db = window.__luviDb;
 
 // ── THEME ──────────────────────────────────────────────────────────────────
 const C = {
@@ -1572,12 +1576,16 @@ function App() {
   // ── Subscribe to Firestore ────────────────────────────────────────────
   useEffect(() => {
     if (!householdId) return;
+    // Safety net: show the app after 6s even if Firestore never responds
+    const fallback = setTimeout(() => setLoaded(true), 6000);
     const docRef = db.collection('households').doc(householdId);
     const unsub = docRef.onSnapshot(snap => {
+      clearTimeout(fallback);
       syncingFromRemote.current = true;
       if (!snap.exists) {
         // Brand new household — seed empty document
-        docRef.set({ family:{}, pantry:{}, mealPlan:{}, shoppingList:{}, customRecipes:[], customPantryItems:{} });
+        docRef.set({ family:{}, pantry:{}, mealPlan:{}, shoppingList:{}, customRecipes:[], customPantryItems:{} })
+          .catch(e => console.error('Firestore seed error:', e));
       } else {
         const d = snap.data();
         if (d.family            !== undefined) setFamily(d.family);
@@ -1590,10 +1598,11 @@ function App() {
       setLoaded(true);
       requestAnimationFrame(() => { syncingFromRemote.current = false; });
     }, err => {
+      clearTimeout(fallback);
       console.error('Firestore error:', err);
-      setLoaded(true); // still show app even if offline
+      setLoaded(true); // show app even if offline
     });
-    return () => unsub();
+    return () => { unsub(); clearTimeout(fallback); };
   }, [householdId]);
 
   // ── Write to Firestore on every change ───────────────────────────────
@@ -1617,10 +1626,15 @@ function App() {
   // ── Loading spinner while first Firestore snapshot arrives ────────────
   if (!loaded) {
     return (
-      <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:C.cream, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
-        <div style={{ width:56, height:56, borderRadius:16, background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26 }}>🍽</div>
-        <div style={{ fontSize:22, fontWeight:900, color:C.orange }}>Luvi</div>
-        <div style={{ fontSize:14, color:C.muted }}>Syncing your household…</div>
+      <div style={{ maxWidth:480, margin:'0 auto', minHeight:'100vh', background:`linear-gradient(135deg,${C.orange},${C.orangeDark})`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+        <div style={{ fontSize:56, animation:'bounce 1.2s ease-in-out infinite' }}>🍽</div>
+        <div style={{ fontSize:26, fontWeight:900, color:C.white, letterSpacing:-0.5 }}>Luvi</div>
+        <div style={{ fontSize:15, color:'rgba(255,255,255,0.85)' }}>Syncing your household…</div>
+        <div style={{ marginTop:8, display:'flex', gap:8 }}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{ width:8, height:8, borderRadius:4, background:'rgba(255,255,255,0.6)', animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite` }} />
+          ))}
+        </div>
       </div>
     );
   }
