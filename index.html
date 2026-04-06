@@ -1564,6 +1564,7 @@ function App() {
   const [householdId, setHouseholdId] = useState(() => localStorage.getItem('luvi_household') || null);
   const [loaded, setLoaded]           = useState(false);
   const syncingFromRemote             = useRef(false);
+  const initialLoadDone               = useRef(false); // blocks writes until first Firestore snapshot
 
   // App data — starts empty, populated from Firestore
   const [family,            setFamily]            = useState({});
@@ -1595,6 +1596,7 @@ function App() {
         if (d.customRecipes     !== undefined) setCustomRecipes(d.customRecipes);
         if (d.customPantryItems !== undefined) setCustomPantryItems(d.customPantryItems);
       }
+      initialLoadDone.current = true;
       setLoaded(true);
       requestAnimationFrame(() => { syncingFromRemote.current = false; });
     }, err => {
@@ -1607,7 +1609,7 @@ function App() {
 
   // ── Write to Firestore on every change ───────────────────────────────
   const write = useCallback((data) => {
-    if (!householdId || syncingFromRemote.current) return;
+    if (!householdId || !initialLoadDone.current || syncingFromRemote.current) return;
     db.collection('households').doc(householdId).set(data, { merge: true }).catch(console.error);
   }, [householdId]);
 
